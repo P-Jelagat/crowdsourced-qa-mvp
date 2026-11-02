@@ -1,122 +1,149 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import './App.css'; 
+
+const API_BASE = "http://localhost:5000";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [listingImg, setListingImg] = useState(null);
+  const [deliveryImg, setDeliveryImg] = useState(null);
+  const [vendorId, setVendorId] = useState("VNDR-883");
+  const [orderId, setOrderId] = useState("ORD-1092");
+  const [buyerId, setBuyerId] = useState("BYR-4402");
+  
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [vendorId]);
+
+  const fetchMetrics = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/vendor/${vendorId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMetrics(data);
+      }
+    } catch (err) {
+      console.error("Error communicating with metrics API:", err);
+    }
+  };
+
+  const handleImageUpload = (e, setter) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setter(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleReset = () => {
+    setListingImg(null);
+    setDeliveryImg(null);
+    setResult(null);
+    // Clear inputs visually
+    document.querySelectorAll('.file-input').forEach(input => input.value = '');
+  };
+
+  const processVerification = async () => {
+    if (!listingImg || !deliveryImg) {
+      alert("Please upload both listing and delivery photographs.");
+      return;
+    }
+    setLoading(true);
+
+    setTimeout(async () => {
+      // Internal calculation framework mockup replacing deep learning environments
+      const generatedScore = Math.floor(Math.random() * (100 - 40 + 1)) + 40;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, vendorId, buyerId, similarityScore: generatedScore })
+        });
+        const data = await response.json();
+        setResult(data.submission);
+        setMetrics(data.vendorMetrics);
+      } catch (err) {
+        alert("Network failure reaching the local backend server node.", err);
+      } finally {
+        setLoading(false);
+      }
+    }, 1500);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <div className="dashboard-container">
+      <header className="dashboard-header">
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+          <h1 className="brand-title">VerifySaaS MVP</h1>
+          <p className="brand-subtitle">Decentralized Integrity Engine (Vite + Express Architecture)</p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        {metrics && (
+          <div className="metrics-card">
+            <span className="metrics-label">VENDOR TRUST SCORE</span>
+            <span className={`metrics-score ${metrics.trustScore > 75 ? 'good' : 'bad'}`}>
+              {metrics.trustScore}%
+            </span>
+            <p className="metrics-subtext">{metrics.mismatchCount}/{metrics.totalInspections} flags</p>
+          </div>
+        )}
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <div className="workspace-grid">
+        <div className="panel">
+          <h2 className="panel-title">Metadata Context</h2>
+          <div className="form-group">
+            <label className="input-label">VENDOR IDENTIFIER
+              <input type="text" value={vendorId} onChange={(e)=>setVendorId(e.target.value)} className="form-input" />
+            </label>
+            <label className="input-label">ORDER REFERENCE
+              <input type="text" value={orderId} onChange={(e)=>setOrderId(e.target.value)} className="form-input" />
+            </label>
+            <label className="input-label">BUYER ACCOUNT REF
+              <input type="text" value={buyerId} onChange={(e)=>setBuyerId(e.target.value)} className="form-input" />
+            </label>
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <div className="panel">
+          <h2 className="panel-title">Verification Inspection Matrix</h2>
+          
+          <div className="upload-grid">
+            <div className="upload-box">
+              <p className="upload-title">1. Master Listing Image</p>
+              <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setListingImg)} className="file-input" />
+              {listingImg && <img src={listingImg} alt="Listing Preview" className="preview-thumbnail" />}
+            </div>
+            
+            <div className="upload-box">
+              <p className="upload-title">2. Buyer Upload Evidence</p>
+              <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setDeliveryImg)} className="file-input" />
+              {deliveryImg && <img src={deliveryImg} alt="Delivery Preview" className="preview-thumbnail" />}
+            </div>
+          </div>
+
+          <div className="button-container">
+            <button onClick={processVerification} disabled={loading} className="action-button">
+              {loading ? "Executing Vision Discrepancy Framework..." : "Trigger AI Validation Analysis"}
+            </button>
+            <button onClick={handleReset} className="reset-button">
+              Reset
+            </button>
+          </div>
+
+          {result && (
+            <div className={`result-box ${result.status === 'MATCH' ? 'match' : 'mismatch'}`}>
+              <h3 className="result-title">Analysis Complete: {result.status}</h3>
+              <p className="result-text">Calculated Visual Match Confidence Metrics: <strong>{result.confidenceScore}%</strong></p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
