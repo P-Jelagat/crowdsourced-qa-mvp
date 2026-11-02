@@ -6,8 +6,9 @@ const API_BASE = "http://localhost:5000";
 function App() {
   const [listingImg, setListingImg] = useState(null);
   const [deliveryImg, setDeliveryImg] = useState(null);
-  const [vendorId, setVendorId] = useState("VNDR-883");
-  const [orderId, setOrderId] = useState("ORD-1092");
+  const [vendorId, setVendorId] = useState("");
+  const [productRef, setProductRef] = useState("");
+  const [orderId, setOrderId] = useState("");
   const [buyerId, setBuyerId] = useState("BYR-4402");
   
   const [loading, setLoading] = useState(false);
@@ -19,8 +20,13 @@ function App() {
   }, [vendorId]);
 
   const fetchMetrics = async () => {
+    if (!vendorId.trim()) {
+      setMetrics(null);
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/vendor/${vendorId}`);
+      const res = await fetch(`${API_BASE}/api/vendor/${encodeURIComponent(vendorId.trim())}`);
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);
@@ -47,6 +53,11 @@ function App() {
   };
 
   const processVerification = async () => {
+    if (!vendorId.trim() || !productRef.trim() || !orderId.trim()) {
+      alert("Please enter the vendor identifier, product reference, and order reference ID.");
+      return;
+    }
+
     if (!listingImg || !deliveryImg) {
       alert("Please upload both listing and delivery photographs.");
       return;
@@ -61,7 +72,13 @@ function App() {
         const response = await fetch(`${API_BASE}/api/verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId, vendorId, buyerId, similarityScore: generatedScore })
+          body: JSON.stringify({
+            orderId: orderId.trim(),
+            vendorId: vendorId.trim(),
+            productRef: productRef.trim(),
+            buyerId,
+            similarityScore: generatedScore
+          })
         });
         const data = await response.json();
         setResult(data.submission);
@@ -71,7 +88,7 @@ function App() {
       } finally {
         setLoading(false);
       }
-    }, 1500);
+    }, 1500); 
   };
 
   return (
@@ -97,10 +114,25 @@ function App() {
           <h2 className="panel-title">Metadata Context</h2>
           <div className="form-group">
             <label className="input-label">VENDOR IDENTIFIER
-              <input type="text" value={vendorId} onChange={(e)=>setVendorId(e.target.value)} className="form-input" />
+              <input type="text" value={vendorId} onChange={(e) => setVendorId(e.target.value)} placeholder="Enter vendor identifier" className="form-input" />
             </label>
-            <label className="input-label">ORDER REFERENCE
-              <input type="text" value={orderId} onChange={(e)=>setOrderId(e.target.value)} className="form-input" />
+            <label className="input-label">PRODUCT REFERENCE
+              <input
+                type="text"
+                value={productRef}
+                onChange={(e) => setProductRef(e.target.value)}
+                placeholder="Enter product reference"
+                className="form-input"
+              />
+            </label>
+            <label className="input-label">ORDER REFERENCE ID
+              <input
+                type="text"
+                value={orderId}
+                onChange={(e) => setOrderId(e.target.value)}
+                placeholder="Enter order reference ID"
+                className="form-input"
+              />
             </label>
             <label className="input-label">BUYER ACCOUNT REF
               <input type="text" value={buyerId} onChange={(e)=>setBuyerId(e.target.value)} className="form-input" />
