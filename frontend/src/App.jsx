@@ -322,7 +322,7 @@ function App() {
               : 'Welcome Back'}
           </h2>
 
-          <form onSubmit={handleAuth}>
+          <form onSubmit={handleAuth} className="auth-form">
 
             <div className="form-group">
 
@@ -419,58 +419,66 @@ function App() {
 
       <header className="dashboard-header">
 
-        <div>
+        <div className="header-main">
 
-          <h1 className="brand-title">
-            VerifySaaS MVP
-          </h1>
+          <div className="user-info">
 
-          <p className="brand-subtitle">
-            Product Integrity Verification System
-          </p>
+            <h1 className="brand-title">
+              VerifySaaS MVP
+            </h1>
 
-          <p>
-            Logged in as: {user.email}
-          </p>
+            <p className="brand-subtitle">
+              Product Integrity Verification System
+            </p>
 
-          <p>
-            Buyer Account: <strong>{user.buyerId}</strong>
-          </p>
+            <p>
+              Logged in as: {user.email}
+            </p>
+
+            <p>
+              Buyer Account: <strong>{user.buyerId}</strong>
+            </p>
+
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="reset-button logout-button"
+          >
+            Log Out
+          </button>
 
         </div>
 
         {metrics && (
 
-          <div className="metrics-card">
+          <div className="metrics-row">
 
-            <span className="metrics-label">
-              VENDOR TRUST SCORE
-            </span>
+            <div className="metrics-card">
 
-            <span className={`metrics-score ${
-              metrics.trustScore >= 75 ? 'good' : 'bad'
-            }`}>
-              {metrics.trustScore}%
-            </span>
+              <span className="metrics-label">
+                VENDOR TRUST SCORE
+              </span>
 
-            <p className="metrics-subtext">
-              {metrics.mismatchCount}/{metrics.totalInspections} mismatches
-            </p>
+              <span className={`metrics-score ${
+                metrics.trustScore >= 75 ? 'good' : 'bad'
+              }`}>
+                {metrics.trustScore}%
+              </span>
 
-            <p className="metrics-subtext">
-              Across all registered buyers
-            </p>
+              <p className="metrics-subtext">
+                {metrics.mismatchCount}/{metrics.totalInspections} mismatches
+              </p>
+
+              <p className="metrics-subtext">
+                Across all registered buyers
+              </p>
+
+            </div>
 
           </div>
 
         )}
-
-        <button
-          onClick={handleLogout}
-          className="reset-button"
-        >
-          Log Out
-        </button>
 
       </header>
 
