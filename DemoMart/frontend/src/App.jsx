@@ -6,6 +6,9 @@ function App() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
 
+   // New state to toggle visibility
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
   const addToCart = (product) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
@@ -18,9 +21,29 @@ function App() {
     });
   };
 
-  // Calculate total item count dynamically
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  // Adjust quantity handles both step up and step down adjustments
+  const updateQuantity = (productId, amount) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) => {
+          if (item.id === productId) {
+            const newQty = item.quantity + amount;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) // Cleans out null entries if count drops to 0
+    );
+  };
 
+  const removeFromCart = (productId) => {
+    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+  };
+
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  
+  // Computes current financial statement baseline
+  const cartSubtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const formatPrice = (price) =>
     `KES ${price.toLocaleString("en-KE")}`;
@@ -128,6 +151,7 @@ const renderProductCard = (product) => (
           <button
             className="icon-button cart-button"
             aria-label="Shopping bag"
+            onClick={() => setIsCartOpen(true)}
             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
@@ -407,6 +431,66 @@ const renderProductCard = (product) => (
           © 2026 DemoMart. All rights reserved.
         </p>
       </footer>
+
+
+          {/* CART DRAWER OVERLAY */}
+      <div className={`cart-overlay-bg ${isCartOpen ? "open" : ""}`} onClick={() => setIsCartOpen(false)}>
+        <div className="cart-sidebar" onClick={(e) => e.stopPropagation()}>
+          <div className="cart-header">
+            <h2>Your Bag ({cartCount})</h2>
+            <button className="close-cart" onClick={() => setIsCartOpen(false)} aria-label="Close cart">
+              &times;
+            </button>
+          </div>
+
+          <div className="cart-items-container">
+            {cart.length === 0 ? (
+              <p className="empty-cart-message">Your shopping bag is empty.</p>
+            ) : (
+              cart.map((item) => (
+                <div className="cart-item" key={item.id}>
+                  <div className="cart-item-img">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} />
+                    ) : (
+                      <span>Photography</span>
+                    )}
+                  </div>
+
+                  <div className="cart-item-details">
+                    <p className="cart-item-vendor">{item.vendorName}</p>
+                    <h4>{item.name}</h4>
+                    <p className="cart-item-price">{formatPrice(item.price)}</p>
+                  </div>
+
+                  <div className="cart-item-actions">
+                    <div className="quantity-controls">
+                      <button onClick={() => updateQuantity(item.id, -1)} aria-label="Decrease quantity">-</button>
+                      <span>{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} aria-label="Increase quantity">+</button>
+                    </div>
+                    <button className="remove-item-btn" onClick={() => removeFromCart(item.id)}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {cart.length > 0 && (
+            <div className="cart-footer">
+              <div className="cart-total-row">
+                <span>Subtotal</span>
+                <strong>{formatPrice(cartSubtotal)}</strong>
+              </div>
+              <button className="checkout-btn" onClick={() => alert("Proceeding to checkout workflow...")}>
+                Secure Checkout
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
     </div>
   );
