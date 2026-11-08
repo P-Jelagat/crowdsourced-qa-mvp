@@ -1,102 +1,88 @@
 import { useState } from "react";
 import "./App.css";
-
-const products = [
-  {
-    id: 1,
-    name: "Sage Ceramic Travel Mug",
-    category: "Drinkware",
-    price: 1850,
-    vendor: "Clay & Co.",
-    badge: "Bestseller",
-    image:
-      "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=700",
-  },
-  {
-    id: 2,
-    name: "Handcrafted Ceramic Bowl",
-    category: "Tableware",
-    price: 2200,
-    vendor: "Earth Studio",
-    badge: "Popular",
-    image:
-      "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=700",
-  },
-  {
-    id: 3,
-    name: "Minimalist Ceramic Vase",
-    category: "Decor",
-    price: 2800,
-    vendor: "Terra Home",
-    badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=700",
-  },
-  {
-    id: 4,
-    name: "Handmade Ceramic Plate Set",
-    category: "Tableware",
-    price: 3500,
-    vendor: "The Pottery Room",
-    badge: "Bestseller",
-    image:
-      "https://images.unsplash.com/photo-1603199506016-b9a594b593c0?w=700",
-  },
-];
-
-const categories = [
-  {
-    name: "Drinkware",
-    image:
-      "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600",
-  },
-  {
-    name: "Tableware",
-    image:
-      "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=600",
-  },
-  {
-    name: "Vases & Decor",
-    image:
-      "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=600",
-  },
-  {
-    name: "Kitchenware",
-    image:
-      "https://images.unsplash.com/photo-1603199506016-b9a594b593c0?w=600",
-  },
-];
+import { vendors, products, productTypes } from "./data/products";
 
 function App() {
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
   const [cartCount, setCartCount] = useState(0);
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-
-    const matchesCategory =
-      activeCategory === "All" ||
-      product.category === activeCategory;
-
-    return matchesSearch && matchesCategory;
-  });
 
   const formatPrice = (price) =>
     `KES ${price.toLocaleString("en-KE")}`;
+
+  const getCategoryProducts = (category) =>
+    products.filter((product) => product.category === category);
+
+  const filteredProducts = products.filter((product) =>
+    `${product.name} ${product.vendorName} ${product.category}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  const scrollToCategory = (slug) => {
+    document.getElementById(slug)?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
+  const renderProductCard = (product) => (
+    <article className="product-card" key={product.id}>
+      <div className="product-image">
+        {product.image ? (
+          <img src={product.image} alt={product.name} />
+        ) : (
+          <div className="image-placeholder">
+            <span>Product photography</span>
+          </div>
+        )}
+
+        <span className="product-badge">
+          {product.vendorName}
+        </span>
+
+        <button
+          className="quick-add"
+          onClick={() => setCartCount((count) => count + 1)}
+          aria-label={`Add ${product.name} to bag`}
+        >
+          +
+        </button>
+      </div>
+
+      <div className="product-info">
+        <p className="product-vendor">{product.vendorName}</p>
+
+        <h3>{product.name}</h3>
+
+        <p className="product-description">
+          {product.description}
+        </p>
+
+        <div className="product-bottom">
+          <span>{formatPrice(product.price)}</span>
+
+          <button
+            onClick={() => setCartCount((count) => count + 1)}
+          >
+            Add to bag +
+          </button>
+        </div>
+      </div>
+    </article>
+  );
 
   return (
     <div className="app">
 
       {/* NAVIGATION */}
       <header className="navbar">
-        <a href="#" className="logo">Demo<span>Mart.</span></a>
+        <a href="#" className="logo">
+          Demo<span>Mart.</span>
+        </a>
 
         <nav className="nav-links">
           <a href="#shop">Shop</a>
           <a href="#bestsellers">Bestsellers</a>
+          <a href="#vendors">Collections</a>
           <a href="#gallery">Gallery</a>
           <a href="#about">About</a>
         </nav>
@@ -104,19 +90,26 @@ function App() {
         <div className="nav-actions">
           <div className="search-box">
             <span>⌕</span>
+
             <input
-              type="text"
+              type="search"
               placeholder="Search products..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <button className="icon-button" aria-label="Account">
+          <button
+            className="icon-button"
+            aria-label="User account"
+          >
             ♙
           </button>
 
-          <button className="icon-button cart-button" aria-label="Shopping bag">
+          <button
+            className="icon-button cart-button"
+            aria-label="Shopping bag"
+          >
             ♧
             <span className="cart-count">{cartCount}</span>
           </button>
@@ -128,7 +121,9 @@ function App() {
         {/* HERO */}
         <section className="hero">
           <div className="hero-content">
-            <p className="eyebrow">THOUGHTFULLY MADE. BEAUTIFULLY LIVED.</p>
+            <p className="eyebrow">
+              THOUGHTFULLY MADE. BEAUTIFULLY LIVED.
+            </p>
 
             <h1>
               A little more
@@ -139,8 +134,9 @@ function App() {
             </h1>
 
             <p className="hero-description">
-              Discover beautiful handmade ceramics, timeless
-              tableware and thoughtful pieces made for your home.
+              Discover beautiful ceramics, timeless tableware
+              and thoughtful pieces made to bring warmth
+              and character into your home.
             </p>
 
             <a href="#shop" className="primary-button">
@@ -149,8 +145,12 @@ function App() {
           </div>
 
           <div className="hero-note">
-            <span>01 / 04</span>
-            <p>Made with care.<br />Made to be loved.</p>
+            <span>01 / 05</span>
+            <p>
+              Made with care.
+              <br />
+              Made to be loved.
+            </p>
           </div>
         </section>
 
@@ -162,30 +162,25 @@ function App() {
               <h2>Shop by category</h2>
             </div>
 
-            <a href="#bestsellers" className="text-link">
-              Explore everything →
-            </a>
+            <span className="text-link">
+              Five collections. Fifty unique pieces.
+            </span>
           </div>
 
           <div className="category-grid">
-            {categories.map((category) => (
+            {productTypes.map((type) => (
               <button
                 className="category-card"
-                key={category.name}
-                onClick={() =>
-                  setActiveCategory(
-                    category.name === "Vases & Decor"
-                      ? "Decor"
-                      : category.name === "Kitchenware"
-                      ? "Tableware"
-                      : category.name
-                  )
-                }
+                key={type.slug}
+                onClick={() => scrollToCategory(type.slug)}
               >
-                <img src={category.image} alt={category.name} />
+                <div className={`category-art ${type.slug}`}>
+                  <span>{type.category}</span>
+                </div>
+
                 <div className="category-overlay">
-                  <h3>{category.name}</h3>
-                  <span>Explore →</span>
+                  <h3>{type.category}s</h3>
+                  <span>Explore collection →</span>
                 </div>
               </button>
             ))}
@@ -197,90 +192,94 @@ function App() {
           <div className="section-heading">
             <div>
               <p className="eyebrow">THE PIECES EVERYONE LOVES</p>
-              <h2>Our bestsellers</h2>
+              <h2>Discover our collection</h2>
             </div>
 
-            <a href="#shop" className="text-link">
-              View all products →
-            </a>
-          </div>
-
-          <div className="filter-buttons">
-            {["All", "Drinkware", "Tableware", "Decor"].map((category) => (
-              <button
-                key={category}
-                className={
-                  activeCategory === category ? "filter active" : "filter"
-                }
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
+            <span className="text-link">
+              Selected pieces from our makers
+            </span>
           </div>
 
           <div className="product-grid">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <article className="product-card" key={product.id}>
-                  <div className="product-image">
-                    <img src={product.image} alt={product.name} />
-                    <span className="product-badge">{product.badge}</span>
-                    <button
-                      className="quick-add"
-                      onClick={() => setCartCount(cartCount + 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="product-info">
-                    <p className="product-vendor">{product.vendor}</p>
-                    <h3>{product.name}</h3>
-
-                    <div className="product-bottom">
-                      <span>{formatPrice(product.price)}</span>
-                      <button
-                        onClick={() => setCartCount(cartCount + 1)}
-                      >
-                        Add to bag +
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <p className="no-products">
-                No products found. Try another search.
-              </p>
-            )}
+            {products.slice(0, 4).map(renderProductCard)}
           </div>
         </section>
 
-        {/* PROMOTIONAL SECTION */}
-        <section className="feature-section" id="about">
-          <div className="feature-image"></div>
+        {/* VENDOR COLLECTIONS */}
+        <section className="vendors-section" id="vendors">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">MEET OUR MAKERS</p>
+              <h2>Collections with character</h2>
+            </div>
 
-          <div className="feature-content">
-            <p className="eyebrow">THE BEAUTY OF HANDMADE</p>
-            <h2>
-              Everyday objects.
-              <br />
-              <em>Extraordinary details.</em>
-            </h2>
-
-            <p>
-              From your morning coffee to dinner with friends,
-              discover ceramics that make ordinary moments feel special.
-              Explore collections from independent makers and ceramic
-              studios.
+            <p className="section-description">
+              Discover ten independent ceramic collections,
+              each with its own distinctive style.
             </p>
+          </div>
 
-            <a href="#shop" className="primary-button">
-              Discover our collection →
-            </a>
+          <div className="vendor-grid">
+            {vendors.map((vendor) => (
+              <article className="vendor-card" key={vendor.id}>
+                <span className="vendor-number">
+                  {vendor.id}
+                </span>
+
+                <h3>{vendor.name}</h3>
+
+                <p>{vendor.description}</p>
+
+                <span className="vendor-style">
+                  {vendor.style}
+                </span>
+              </article>
+            ))}
           </div>
         </section>
+
+        {/* FIVE PRODUCT CATEGORY SECTIONS */}
+        {productTypes.map((type) => {
+          const categoryProducts = getCategoryProducts(type.category);
+
+          const visibleProducts = categoryProducts.filter((product) =>
+            `${product.name} ${product.vendorName}`
+              .toLowerCase()
+              .includes(search.toLowerCase())
+          );
+
+          return (
+            <section
+              className="products-section category-products"
+              id={type.slug}
+              key={type.slug}
+            >
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">
+                    EXPLORE OUR MAKERS
+                  </p>
+
+                  <h2>{type.category}s</h2>
+                </div>
+
+                <span className="text-link">
+                  {categoryProducts.length} unique designs
+                </span>
+              </div>
+
+              {visibleProducts.length > 0 ? (
+                <div className="product-grid">
+                  {visibleProducts.map(renderProductCard)}
+                </div>
+              ) : (
+                <p className="no-products">
+                  No matching products found in this collection.
+                </p>
+              )}
+            </section>
+          );
+        })}
 
         {/* GALLERY */}
         <section className="gallery-section" id="gallery">
@@ -290,61 +289,73 @@ function App() {
               <h2>Made for your everyday</h2>
             </div>
 
-            <p className="gallery-description">
-              Beautiful pieces, thoughtful spaces and everyday moments.
+            <p className="section-description">
+              Beautiful pieces, thoughtful spaces and
+              everyday moments.
             </p>
           </div>
 
           <div className="gallery-grid">
-            <img
-              src="https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?w=700"
-              alt="Ceramic homeware"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?w=700"
-              alt="Home decor inspiration"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=700"
-              alt="Handmade pottery"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=700"
-              alt="Ceramic vase"
-            />
+            <div className="gallery-item gallery-large">
+              <img
+                src="https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?w=900"
+                alt="Ceramic homeware arrangement"
+              />
+            </div>
+
+            <div className="gallery-item">
+              <img
+                src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=700"
+                alt="Handcrafted ceramics"
+              />
+            </div>
+
+            <div className="gallery-item">
+              <img
+                src="https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=700"
+                alt="Ceramic vase"
+              />
+            </div>
           </div>
         </section>
 
         {/* REVIEWS */}
         <section className="reviews-section">
           <p className="eyebrow">KIND WORDS</p>
+
           <h2>Loved by our community.</h2>
 
           <div className="review-grid">
             <article>
               <span className="stars">★★★★★</span>
+
               <p>
-                "The quality is beautiful. My new favourite mug
-                for slow mornings."
+                "The quality is beautiful. My new favourite
+                mug for slow mornings."
               </p>
+
               <small>— Sarah M.</small>
             </article>
 
             <article>
               <span className="stars">★★★★★</span>
+
               <p>
                 "Exactly what I was looking for. Thoughtful,
                 beautiful and unique."
               </p>
+
               <small>— Angela K.</small>
             </article>
 
             <article>
               <span className="stars">★★★★★</span>
+
               <p>
                 "I love finding pieces that feel personal.
                 Will definitely shop again."
               </p>
+
               <small>— Wanjiku N.</small>
             </article>
           </div>
@@ -353,15 +364,20 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className="footer">
+      <footer className="footer" id="about">
         <div>
-          <a href="#" className="logo">Demo<span>Mart.</span></a>
-          <p>Thoughtful ceramics for everyday living.</p>
+          <a href="#" className="logo">
+            Demo<span>Mart.</span>
+          </a>
+
+          <p>
+            Thoughtful ceramics for everyday living.
+          </p>
         </div>
 
         <div className="footer-links">
           <a href="#shop">Shop</a>
-          <a href="#bestsellers">Bestsellers</a>
+          <a href="#vendors">Our Makers</a>
           <a href="#gallery">Gallery</a>
           <a href="#about">About</a>
         </div>
