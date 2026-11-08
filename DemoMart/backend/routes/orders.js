@@ -1,54 +1,115 @@
-import express from 'express';
-import jwt from 'jsonwebtoken';
-import Order from '../models/Order.js';
+import express from "express";
+import jwt from "jsonwebtoken";
+import Order from "../models/Order.js";
 
 const router = express.Router();
 
-// Active Session Gate Middleware
+// AUTHENTICATION MIDDLEWARE
 const authGuard = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ message: "Access denied. Sign-in session required." });
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Access denied. Please sign in first.",
+    });
+  }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'pottery_secret_key');
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "pottery_secret_key"
+    );
+
     req.userId = decoded.id;
+
     next();
-  } catch (err) {
-    res.status(401).json({ message: "Session expired. Please log in again." });
+  } catch (error) {
+    return res.status(401).json({
+      message: "Your session has expired. Please sign in again.",
+    });
   }
 };
 
-// ACQUIRE HISTORY
-router.get('/', authGuard, async (req, res) => {
+// GET ORDER HISTORY
+router.get("/", authGuard, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.userId }).sort({ createdAt: -1 });
-    res.json(orders);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const orders = await Order.find({
+      userId: req.userId,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Order history error:", error);
+
+    res.status(500).json({
+      message: "Unable to retrieve order history.",
+    });
   }
 });
 
-// POST RECEIPT SNAPSHOT
-router.post('/', authGuard, async (req, res) => {
+// CREATE NEW ORDER
+router.post("/", authGuard, async (req, res) => {
   try {
     const { items, total } = req.body;
-    
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        message: "Your order must contain at least one product.",
+      });
+    }
+
+    const validItems = items.every(
+      (item) =>
+        item.name &&
+        Number(item.quantity) > 0 &&
+        Number(item.price) >= 0
+    );
+
+    if (!validItems) {
+      return res.status(400).json({
+        message: "One or more order items are invalid.",
+      });
+    }
+
+    if (!Number.isFinite(Number(total)) || Number(total) < 0) {
+      return res.status(400).json({
+        message: "Invalid order total.",
+      });
+    }
+
+    const orderItems = items.map((item) => ({
+      name: item.name,
+      quantity: Number(item.quantity),
+      pricePaid: Number(item.price),
+    }));
+
     const newOrder = new Order({
       userId: req.userId,
-      orderId: `DM-${Math.floor(100000 + Math.random() * 900000)}`,
+
+      orderId: `DM-${Date.now()}-${Math.floor(
+        100 + Math.random() * 900
+      )}`,
+
       date: new Date().toLocaleDateString("en-KE"),
-      items: items.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        pricePaid: item.price
-      })),
-      subtotal: total
+
+      items: orderItems,
+
+      subtotal: Number(total),
     });
 
     await newOrder.save();
-    res.status(201).json(newOrder);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    res.status(201).json({
+      message: "Order successfully placed.",
+      orderId: newOrder.orderId,
+      order: newOrder,
+    });
+  } catch (error) {
+    console.error("Checkout error:", error);
+
+    res.status(500).json({
+      message: "Unable to process your order.",
+    });
   }
 });
 

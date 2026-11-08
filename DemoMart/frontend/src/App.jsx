@@ -1,61 +1,129 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import { vendors, products, productTypes } from "./data/products";
 
+const API_URL = "http://localhost:5001";
+
 function App() {
   const [search, setSearch] = useState("");
-  const [cart, setCart] = useState([]);
 
-   // New state to toggle visibility
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("demoMartCart")) || [];
+    } catch {
+      return [];
+    }
+  });
+
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // ACCOUNT STATES
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("demoMartUser")) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [token, setToken] = useState(
+    () => localStorage.getItem("demoMartToken") || ""
+  );
+
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
+
+  const [authForm, setAuthForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // ORDER STATES
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState("");
+
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
+
+  // SAVE CART WHENEVER IT CHANGES
+  useEffect(() => {
+    localStorage.setItem("demoMartCart", JSON.stringify(cart));
+  }, [cart]);
+
+  // CHECK WHETHER THE STORED SESSION STILL HAS A TOKEN
+  useEffect(() => {
+    if (!token || !user) {
+      localStorage.removeItem("demoMartToken");
+      localStorage.removeItem("demoMartUser");
+      setToken("");
+      setUser(null);
+    }
+  }, []);
+
+  // CART FUNCTIONS
   const addToCart = (product) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      const existingItem = prevCart.find(
+        (item) => item.id === product.id
+      );
+
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
+
       return [...prevCart, { ...product, quantity: 1 }];
     });
   };
 
-  // Adjust quantity handles both step up and step down adjustments
   const updateQuantity = (productId, amount) => {
     setCart((prevCart) =>
       prevCart
         .map((item) => {
           if (item.id === productId) {
             const newQty = item.quantity + amount;
-            return newQty > 0 ? { ...item, quantity: newQty } : null;
+
+            return newQty > 0
+              ? { ...item, quantity: newQty }
+              : null;
           }
+
           return item;
         })
-        .filter(Boolean) // Cleans out null entries if count drops to 0
+        .filter(Boolean)
     );
   };
 
   const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    setCart((prevCart) =>
+      prevCart.filter((item) => item.id !== productId)
+    );
   };
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
-  
-  // Computes current financial statement baseline
-  const cartSubtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const cartCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
+  const cartSubtotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   const formatPrice = (price) =>
-    `KES ${price.toLocaleString("en-KE")}`;
+    `KES ${Number(price).toLocaleString("en-KE")}`;
 
   const getCategoryProducts = (category) =>
     products.filter((product) => product.category === category);
-
-  // const filteredProducts = products.filter((product) =>
-  //   `${product.name} ${product.vendorName} ${product.category}`
-  //     .toLowerCase()
-  //     .includes(search.toLowerCase())
-  // );
 
   const scrollToCategory = (slug) => {
     document.getElementById(slug)?.scrollIntoView({
@@ -63,50 +131,253 @@ function App() {
     });
   };
 
-const renderProductCard = (product) => (
-  <article className="product-card" key={product.id}>
-    <div className="product-image">
-      {product.image ? (
-        <img src={product.image} alt={product.name} />
-      ) : (
-        <div className="image-placeholder">
-          <span>Product photography</span>
-        </div>
-      )}
+  // ACCOUNT FUNCTIONS
+  const handleAccountClick = () => {
+    setIsAccountOpen(true);
+    setShowOrderHistory(false);
+    setAuthError("");
+    setCheckoutMessage("");
+  };
 
-      <span className="product-badge">
-        {product.vendorName}
-      </span>
+  const handleAuthInput = (e) => {
+    const { name, value } = e.target;
 
-      <button
-        className="quick-add"
-        onClick={() => addToCart(product)}
-        aria-label={`Add ${product.name} to bag`}
-      >
-        +
-      </button>
-    </div>
+    setAuthForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    <div className="product-info">
-      <p className="product-vendor">{product.vendorName}</p>
+  // SIGN UP AND LOG IN
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
 
-      <h3>{product.name}</h3>
+    setAuthError("");
+    setAuthLoading(true);
 
-      <p className="product-description">
-        {product.description}
-      </p>
+    try {
+      const endpoint = isSignUp ? "signup" : "login";
 
-      <div className="product-bottom">
-        <span>{formatPrice(product.price)}</span>
+      const response = await fetch(
+        `${API_URL}/api/auth/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: authForm.name,
+            email: authForm.email,
+            password: authForm.password,
+          }),
+        }
+      );
 
-        <button onClick={() => addToCart(product)}>
-          Add to bag +
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Authentication failed."
+        );
+      }
+
+      // SAVE USER AND TOKEN
+      localStorage.setItem("demoMartToken", data.token);
+      localStorage.setItem(
+        "demoMartUser",
+        JSON.stringify(data.user)
+      );
+
+      setToken(data.token);
+      setUser(data.user);
+
+      setAuthForm({
+        name: "",
+        email: "",
+        password: "",
+      });
+
+      setAuthError("");
+      setShowOrderHistory(false);
+    } catch (error) {
+      setAuthError(error.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // LOG OUT
+  const handleLogout = () => {
+    localStorage.removeItem("demoMartToken");
+    localStorage.removeItem("demoMartUser");
+
+    setToken("");
+    setUser(null);
+
+    setOrders([]);
+    setShowOrderHistory(false);
+    setIsAccountOpen(false);
+
+    setAuthError("");
+  };
+
+  // GET ORDER HISTORY FROM MONGODB
+  const fetchOrderHistory = async () => {
+    if (!token) return;
+
+    setOrdersLoading(true);
+    setOrdersError("");
+    setShowOrderHistory(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Could not retrieve orders."
+        );
+      }
+
+      setOrders(data);
+    } catch (error) {
+      setOrdersError(error.message);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  // CHECKOUT
+  const handleCheckout = async () => {
+    setCheckoutMessage("");
+
+    if (cart.length === 0) {
+      setCheckoutMessage("Your shopping bag is empty.");
+      return;
+    }
+
+    // REQUIRE LOGIN BEFORE CHECKOUT
+    if (!token || !user) {
+      setIsCartOpen(false);
+      setIsAccountOpen(true);
+      setShowOrderHistory(false);
+      setAuthError("Please sign in or create an account before checkout.");
+      return;
+    }
+
+    setCheckoutLoading(true);
+
+    try {
+      const orderItems = cart.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      }));
+
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: orderItems,
+          total: cartSubtotal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Checkout failed."
+        );
+      }
+
+      // CLEAR CART AFTER SUCCESSFUL ORDER
+      setCart([]);
+
+      setCheckoutMessage(
+        `Your order ${data.orderId} has been placed successfully!`
+      );
+
+      setIsCartOpen(false);
+
+      // REFRESH ORDER HISTORY
+      const historyResponse = await fetch(
+        `${API_URL}/api/orders`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (historyResponse.ok) {
+        const historyData = await historyResponse.json();
+        setOrders(historyData);
+      }
+
+      alert(
+        `Thank you for shopping with DemoMart!\n\nYour order number is ${data.orderId}`
+      );
+    } catch (error) {
+      setCheckoutMessage(error.message);
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  // PRODUCT CARD
+  const renderProductCard = (product) => (
+    <article className="product-card" key={product.id}>
+      <div className="product-image">
+        {product.image ? (
+          <img src={product.image} alt={product.name} />
+        ) : (
+          <div className="image-placeholder">
+            <span>Product photography</span>
+          </div>
+        )}
+
+        <span className="product-badge">
+          {product.vendorName}
+        </span>
+
+        <button
+          className="quick-add"
+          onClick={() => addToCart(product)}
+          aria-label={`Add ${product.name} to bag`}
+        >
+          +
         </button>
       </div>
-    </div>
-  </article>
-);
 
+      <div className="product-info">
+        <p className="product-vendor">{product.vendorName}</p>
+
+        <h3>{product.name}</h3>
+
+        <p className="product-description">
+          {product.description}
+        </p>
+
+        <div className="product-bottom">
+          <span>{formatPrice(product.price)}</span>
+
+          <button onClick={() => addToCart(product)}>
+            Add to bag +
+          </button>
+        </div>
+      </div>
+    </article>
+  );
 
   return (
     <div className="app">
@@ -127,8 +398,24 @@ const renderProductCard = (product) => (
 
         <div className="nav-actions">
           <div className="search-box">
-            {/* Clean search icon overlay */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line
+                x1="21"
+                y1="21"
+                x2="16.65"
+                y2="16.65"
+              ></line>
+            </svg>
 
             <input
               type="search"
@@ -138,27 +425,53 @@ const renderProductCard = (product) => (
             />
           </div>
 
-          {/* Account Icon */}
+          {/* ACCOUNT BUTTON */}
           <button
-            className="icon-button"
+            className="icon-button account-button"
             aria-label="User account"
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handleAccountClick}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+
+            {user && <span className="account-status-dot"></span>}
           </button>
 
-          {/* Cart/Bag Icon */}
+          {/* CART BUTTON */}
           <button
             className="icon-button cart-button"
             aria-label="Shopping bag"
             onClick={() => setIsCartOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+
             <span className="cart-count">{cartCount}</span>
           </button>
         </div>
-
       </header>
 
       <main>
@@ -283,7 +596,7 @@ const renderProductCard = (product) => (
           </div>
         </section>
 
-        {/* FIVE PRODUCT CATEGORY SECTIONS */}
+        {/* PRODUCT CATEGORY SECTIONS */}
         {productTypes.map((type) => {
           const categoryProducts = getCategoryProducts(type.category);
 
@@ -373,34 +686,28 @@ const renderProductCard = (product) => (
           <div className="review-grid">
             <article>
               <span className="stars">★★★★★</span>
-
               <p>
                 "The quality is beautiful. My new favourite
                 mug for slow mornings."
               </p>
-
               <small>— Sarah M.</small>
             </article>
 
             <article>
               <span className="stars">★★★★★</span>
-
               <p>
                 "Exactly what I was looking for. Thoughtful,
                 beautiful and unique."
               </p>
-
               <small>— Angela K.</small>
             </article>
 
             <article>
               <span className="stars">★★★★★</span>
-
               <p>
                 "I love finding pieces that feel personal.
                 Will definitely shop again."
               </p>
-
               <small>— Wanjiku N.</small>
             </article>
           </div>
@@ -432,20 +739,32 @@ const renderProductCard = (product) => (
         </p>
       </footer>
 
-
-          {/* CART DRAWER OVERLAY */}
-      <div className={`cart-overlay-bg ${isCartOpen ? "open" : ""}`} onClick={() => setIsCartOpen(false)}>
-        <div className="cart-sidebar" onClick={(e) => e.stopPropagation()}>
+      {/* CART DRAWER */}
+      <div
+        className={`cart-overlay-bg ${isCartOpen ? "open" : ""}`}
+        onClick={() => setIsCartOpen(false)}
+      >
+        <div
+          className="cart-sidebar"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="cart-header">
             <h2>Your Bag ({cartCount})</h2>
-            <button className="close-cart" onClick={() => setIsCartOpen(false)} aria-label="Close cart">
+
+            <button
+              className="close-cart"
+              onClick={() => setIsCartOpen(false)}
+              aria-label="Close cart"
+            >
               &times;
             </button>
           </div>
 
           <div className="cart-items-container">
             {cart.length === 0 ? (
-              <p className="empty-cart-message">Your shopping bag is empty.</p>
+              <p className="empty-cart-message">
+                Your shopping bag is empty.
+              </p>
             ) : (
               cart.map((item) => (
                 <div className="cart-item" key={item.id}>
@@ -458,18 +777,38 @@ const renderProductCard = (product) => (
                   </div>
 
                   <div className="cart-item-details">
-                    <p className="cart-item-vendor">{item.vendorName}</p>
+                    <p className="cart-item-vendor">
+                      {item.vendorName}
+                    </p>
+
                     <h4>{item.name}</h4>
-                    <p className="cart-item-price">{formatPrice(item.price)}</p>
+
+                    <p className="cart-item-price">
+                      {formatPrice(item.price)}
+                    </p>
                   </div>
 
                   <div className="cart-item-actions">
                     <div className="quantity-controls">
-                      <button onClick={() => updateQuantity(item.id, -1)} aria-label="Decrease quantity">-</button>
+                      <button
+                        onClick={() => updateQuantity(item.id, -1)}
+                      >
+                        -
+                      </button>
+
                       <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} aria-label="Increase quantity">+</button>
+
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                      >
+                        +
+                      </button>
                     </div>
-                    <button className="remove-item-btn" onClick={() => removeFromCart(item.id)}>
+
+                    <button
+                      className="remove-item-btn"
+                      onClick={() => removeFromCart(item.id)}
+                    >
                       Remove
                     </button>
                   </div>
@@ -484,13 +823,241 @@ const renderProductCard = (product) => (
                 <span>Subtotal</span>
                 <strong>{formatPrice(cartSubtotal)}</strong>
               </div>
-              <button className="checkout-btn" onClick={() => alert("Proceeding to checkout workflow...")}>
-                Secure Checkout
+
+              {checkoutMessage && (
+                <p className="checkout-message">
+                  {checkoutMessage}
+                </p>
+              )}
+
+              <button
+                className="checkout-btn"
+                onClick={handleCheckout}
+                disabled={checkoutLoading}
+              >
+                {checkoutLoading
+                  ? "Processing order..."
+                  : "Secure Checkout"}
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* ACCOUNT MODAL */}
+      {isAccountOpen && (
+        <div
+          className="account-overlay"
+          onClick={() => setIsAccountOpen(false)}
+        >
+          <div
+            className="account-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="account-close"
+              onClick={() => setIsAccountOpen(false)}
+            >
+              &times;
+            </button>
+
+            {!user ? (
+              <>
+                <p className="eyebrow">WELCOME TO DEMOMART</p>
+
+                <h2>
+                  {isSignUp ? "Create your account" : "Welcome back"}
+                </h2>
+
+                <p className="account-description">
+                  {isSignUp
+                    ? "Create an account to enjoy a more personal shopping experience."
+                    : "Sign in to access your account and order history."}
+                </p>
+
+                {authError && (
+                  <p className="auth-error">{authError}</p>
+                )}
+
+                <form
+                  className="account-form"
+                  onSubmit={handleAuthSubmit}
+                >
+                  {isSignUp && (
+                    <label>
+                      Full name
+
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Your name"
+                        value={authForm.name}
+                        onChange={handleAuthInput}
+                        required
+                      />
+                    </label>
+                  )}
+
+                  <label>
+                    Email address
+
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="you@example.com"
+                      value={authForm.email}
+                      onChange={handleAuthInput}
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Password
+
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Enter your password"
+                      value={authForm.password}
+                      onChange={handleAuthInput}
+                      required
+                      minLength="6"
+                    />
+                  </label>
+
+                  <button
+                    type="submit"
+                    className="account-submit"
+                    disabled={authLoading}
+                  >
+                    {authLoading
+                      ? "Please wait..."
+                      : isSignUp
+                      ? "Create Account"
+                      : "Sign In"}
+                  </button>
+                </form>
+
+                <p className="account-switch">
+                  {isSignUp
+                    ? "Already have an account?"
+                    : "Don't have an account?"}
+
+                  <button
+                    onClick={() => {
+                      setIsSignUp(!isSignUp);
+                      setAuthError("");
+                    }}
+                  >
+                    {isSignUp ? "Sign in" : "Sign up"}
+                  </button>
+                </p>
+              </>
+            ) : showOrderHistory ? (
+              <>
+                <p className="eyebrow">YOUR PURCHASES</p>
+
+                <h2>Order history</h2>
+
+                <button
+                  className="back-account"
+                  onClick={() => setShowOrderHistory(false)}
+                >
+                  ← Back to account
+                </button>
+
+                {ordersLoading ? (
+                  <p className="order-message">
+                    Loading your orders...
+                  </p>
+                ) : ordersError ? (
+                  <p className="auth-error">{ordersError}</p>
+                ) : orders.length === 0 ? (
+                  <p className="order-message">
+                    You haven't placed any orders yet.
+                  </p>
+                ) : (
+                  <div className="order-list">
+                    {orders.map((order) => (
+                      <article
+                        className="order-card"
+                        key={order._id}
+                      >
+                        <div className="order-card-header">
+                          <div>
+                            <span>ORDER NUMBER</span>
+                            <h3>{order.orderId}</h3>
+                          </div>
+
+                          <span className="order-status">
+                            Completed
+                          </span>
+                        </div>
+
+                        <p className="order-date">
+                          {order.date}
+                        </p>
+
+                        <div className="order-products">
+                          {order.items.map((item, index) => (
+                            <div
+                              className="order-product"
+                              key={`${order._id}-${index}`}
+                            >
+                              <span>
+                                {item.name} × {item.quantity}
+                              </span>
+
+                              <strong>
+                                {formatPrice(
+                                  item.pricePaid * item.quantity
+                                )}
+                              </strong>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="order-total">
+                          <span>Order total</span>
+                          <strong>
+                            {formatPrice(order.subtotal)}
+                          </strong>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="eyebrow">YOUR ACCOUNT</p>
+
+                <h2>Hello, {user.name}.</h2>
+
+                <p className="account-description">
+                  {user.email}
+                </p>
+
+                <div className="account-actions">
+                  <button
+                    className="account-submit"
+                    onClick={fetchOrderHistory}
+                  >
+                    View Order History
+                  </button>
+
+                  <button
+                    className="logout-button"
+                    onClick={handleLogout}
+                  >
+                    Log Out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -995,3 +995,290 @@ a {
 .checkout-btn:hover {
   background: #a58c64;
 }
+
+/* ACCOUNT BUTTON */
+
+.account-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-status-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #5b956a;
+  border: 2px solid #f8f7f1;
+  top: 0;
+  right: 0;
+}
+
+/* ACCOUNT MODAL OVERLAY */
+
+.account-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 35, 27, 0.58);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.account-modal {
+  width: 100%;
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  background: #f8f7f1;
+  padding: 40px;
+  border-radius: 5px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.account-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #536157;
+}
+
+.account-modal h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+.account-description {
+  font-size: 12px;
+  color: #777e73;
+  line-height: 1.7;
+  margin-bottom: 25px;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.account-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #536157;
+}
+
+.account-form input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #deded4;
+  border-radius: 3px;
+  background: #fff;
+  outline: none;
+  font-size: 12px;
+}
+
+.account-form input:focus {
+  border-color: #244c3d;
+}
+
+.account-submit {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 3px;
+  background: #244c3d;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.account-submit:hover {
+  background: #a58c64;
+}
+
+.account-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.account-switch {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 11px;
+  color: #777e73;
+}
+
+.account-switch button {
+  border: none;
+  background: transparent;
+  color: #244c3d;
+  font-weight: 700;
+  margin-left: 5px;
+  text-decoration: underline;
+}
+
+.auth-error {
+  padding: 12px;
+  margin: 15px 0;
+  background: #f5e4e0;
+  color: #9b3d36;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* LOGGED-IN ACCOUNT */
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  border: 1px solid #deded4;
+  border-radius: 3px;
+  color: #536157;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.logout-button:hover {
+  background: #eeeee7;
+}
+
+.back-account {
+  background: transparent;
+  border: none;
+  color: #536157;
+  font-size: 11px;
+  margin: 10px 0 20px;
+  text-decoration: underline;
+}
+
+/* ORDER HISTORY */
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.order-card {
+  padding: 18px;
+  background: #eeeee7;
+  border-radius: 4px;
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-card-header span:first-child {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #8b8e80;
+  margin-bottom: 5px;
+}
+
+.order-card-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.order-status {
+  padding: 6px 9px;
+  background: #dce8dc;
+  color: #315a3c;
+  border-radius: 20px;
+  font-size: 9px;
+}
+
+.order-date {
+  font-size: 10px;
+  color: #8b8e80;
+  margin: 12px 0;
+}
+
+.order-products {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid #deded4;
+  border-bottom: 1px solid #deded4;
+}
+
+.order-product {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+  color: #536157;
+}
+
+.order-product strong {
+  white-space: nowrap;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 13px;
+  font-size: 12px;
+}
+
+.order-message {
+  text-align: center;
+  font-size: 12px;
+  color: #777e73;
+  padding: 25px 0;
+}
+
+/* CHECKOUT MESSAGE */
+
+.checkout-message {
+  font-size: 11px;
+  color: #9b3d36;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* RESPONSIVE ACCOUNT MODAL */
+
+@media (max-width: 500px) {
+  .account-modal {
+    padding: 30px 22px;
+  }
+
+  .account-modal h2 {
+    font-size: 25px;
+  }
+
+  .order-card {
+    padding: 13px;
+  }
+}
