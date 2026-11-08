@@ -115,7 +115,7 @@ const products = vendors.flatMap((vendor, vendorIndex) =>
 
     description: `${type.category} featuring ${vendor.style.toLowerCase()}.`,
 
-    image: `/images/products/${vendorImageFolders[vendor.id]}/${type.slug}.jpg`,
+    image: `/images/products/${vendorImageFolders[vendor.id]}/${type.slug}.png`,
 
     isAvailable: true,
   }))
