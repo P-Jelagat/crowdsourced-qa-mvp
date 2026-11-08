@@ -4,7 +4,23 @@ import { vendors, products, productTypes } from "./data/products";
 
 function App() {
   const [search, setSearch] = useState("");
-  const [cartCount, setCartCount] = useState(0);
+  const [cart, setCart] = useState([]);
+
+  const addToCart = (product) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+  };
+
+  // Calculate total item count dynamically
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+
 
   const formatPrice = (price) =>
     `KES ${price.toLocaleString("en-KE")}`;
@@ -12,11 +28,11 @@ function App() {
   const getCategoryProducts = (category) =>
     products.filter((product) => product.category === category);
 
-  const filteredProducts = products.filter((product) =>
-    `${product.name} ${product.vendorName} ${product.category}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  // const filteredProducts = products.filter((product) =>
+  //   `${product.name} ${product.vendorName} ${product.category}`
+  //     .toLowerCase()
+  //     .includes(search.toLowerCase())
+  // );
 
   const scrollToCategory = (slug) => {
     document.getElementById(slug)?.scrollIntoView({
@@ -24,51 +40,50 @@ function App() {
     });
   };
 
-  const renderProductCard = (product) => (
-    <article className="product-card" key={product.id}>
-      <div className="product-image">
-        {product.image ? (
-          <img src={product.image} alt={product.name} />
-        ) : (
-          <div className="image-placeholder">
-            <span>Product photography</span>
-          </div>
-        )}
+const renderProductCard = (product) => (
+  <article className="product-card" key={product.id}>
+    <div className="product-image">
+      {product.image ? (
+        <img src={product.image} alt={product.name} />
+      ) : (
+        <div className="image-placeholder">
+          <span>Product photography</span>
+        </div>
+      )}
 
-        <span className="product-badge">
-          {product.vendorName}
-        </span>
+      <span className="product-badge">
+        {product.vendorName}
+      </span>
 
-        <button
-          className="quick-add"
-          onClick={() => setCartCount((count) => count + 1)}
-          aria-label={`Add ${product.name} to bag`}
-        >
-          +
+      <button
+        className="quick-add"
+        onClick={() => addToCart(product)}
+        aria-label={`Add ${product.name} to bag`}
+      >
+        +
+      </button>
+    </div>
+
+    <div className="product-info">
+      <p className="product-vendor">{product.vendorName}</p>
+
+      <h3>{product.name}</h3>
+
+      <p className="product-description">
+        {product.description}
+      </p>
+
+      <div className="product-bottom">
+        <span>{formatPrice(product.price)}</span>
+
+        <button onClick={() => addToCart(product)}>
+          Add to bag +
         </button>
       </div>
+    </div>
+  </article>
+);
 
-      <div className="product-info">
-        <p className="product-vendor">{product.vendorName}</p>
-
-        <h3>{product.name}</h3>
-
-        <p className="product-description">
-          {product.description}
-        </p>
-
-        <div className="product-bottom">
-          <span>{formatPrice(product.price)}</span>
-
-          <button
-            onClick={() => setCartCount((count) => count + 1)}
-          >
-            Add to bag +
-          </button>
-        </div>
-      </div>
-    </article>
-  );
 
   return (
     <div className="app">
@@ -89,7 +104,8 @@ function App() {
 
         <div className="nav-actions">
           <div className="search-box">
-            <span>⌕</span>
+            {/* Clean search icon overlay */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 
             <input
               type="search"
@@ -99,21 +115,26 @@ function App() {
             />
           </div>
 
+          {/* Account Icon */}
           <button
             className="icon-button"
             aria-label="User account"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ♙
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           </button>
 
+          {/* Cart/Bag Icon */}
           <button
             className="icon-button cart-button"
             aria-label="Shopping bag"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ♧
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
             <span className="cart-count">{cartCount}</span>
           </button>
         </div>
+
       </header>
 
       <main>
