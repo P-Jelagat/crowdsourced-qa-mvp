@@ -89,6 +89,19 @@ const vendors = [
   },
 ];
 
+const vendorImageFolders = {
+  V001: "clay-co",
+  V002: "terra-studio",
+  V003: "pottery-room",
+  V004: "earth-form",
+  V005: "kiln-house",
+  V006: "mud-matter",
+  V007: "kipepeo",
+  V008: "ochre-studio",
+  V009: "clay-garden",
+  V010: "form-fire",
+};
+
 const products = vendors.flatMap((vendor, vendorIndex) =>
   productTypes.map((type, productIndex) => ({
     id: `${vendor.id}-P${productIndex + 1}`,
@@ -99,8 +112,11 @@ const products = vendors.flatMap((vendor, vendorIndex) =>
     categorySlug: type.slug,
     style: vendor.style,
     price: type.basePrice + vendorIndex * 100,
+
     description: `${type.category} featuring ${vendor.style.toLowerCase()}.`,
-    image: "",
+
+    image: `/images/products/${vendorImageFolders[vendor.id]}/${type.slug}.jpg`,
+
     isAvailable: true,
   }))
 );
