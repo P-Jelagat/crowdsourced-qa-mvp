@@ -886,3 +886,810 @@ h3 {
   .result-heading h2 { font-size: 21px; }
   .completed-notice { align-items: flex-start; padding: 18px; }
 }
+
+/* ==========================================
+   DASHBOARD NAVIGATION
+========================================== */
+
+.sidebar-nav a.active {
+  background: var(--green);
+  color: white;
+}
+
+.sidebar-nav a.active:hover {
+  background: var(--green-dark);
+  color: white;
+}
+
+
+/* ==========================================
+   DASHBOARD GENERAL
+========================================== */
+
+.section-intro {
+  margin-bottom: 30px;
+}
+
+.section-intro h1 {
+  font-size: 31px;
+  margin-bottom: 10px;
+}
+
+.section-intro p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+  max-width: 650px;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.content-panel {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 27px;
+  margin-bottom: 25px;
+  min-width: 0;
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.panel-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.panel-heading h2 {
+  font-size: 22px;
+}
+
+.panel-heading a {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.panel-heading a:hover {
+  text-decoration: underline;
+}
+
+.milestone-panel h2,
+.contribution-progress h2 {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.milestone-panel > p,
+.contribution-progress > p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.milestone-panel .secondary-button {
+  margin-top: 20px;
+}
+
+
+/* ==========================================
+   PROGRESS BARS
+========================================== */
+
+.progress-track,
+.score-track {
+  width: 100%;
+  height: 8px;
+  background: #e9ece5;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.progress-track {
+  margin-top: 22px;
+}
+
+.progress-fill,
+.score-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+
+.progress-caption {
+  margin-top: 10px;
+  font-size: 10px !important;
+  color: var(--muted);
+}
+
+.score-track {
+  height: 6px;
+}
+
+.score-fill {
+  background: var(--gold);
+}
+
+.contribution-progress {
+  max-width: 700px;
+}
+
+
+/* ==========================================
+   BUTTONS
+========================================== */
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.secondary-button:hover {
+  background: var(--green);
+  color: white;
+}
+
+
+/* ==========================================
+   ACTIVITY LIST
+========================================== */
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green);
+  font-weight: 700;
+}
+
+.activity-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-details h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.activity-details p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.tier-badge {
+  display: inline-block;
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.tier-very_low {
+  color: #a34b42;
+  background: #f9eae8;
+}
+
+.tier-somewhat_similar {
+  color: #94713e;
+  background: #f6f0e3;
+}
+
+.tier-almost_identical {
+  color: var(--green);
+  background: var(--green-light);
+}
+
+
+/* ==========================================
+   EMPTY STATES
+========================================== */
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 23px;
+  margin: 0 auto 15px;
+}
+
+.empty-state h3 {
+  font-size: 19px;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  max-width: 400px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+
+/* ==========================================
+   METRICS EXPLANATION
+========================================== */
+
+.metrics-explanation {
+  background: #e9eee7;
+  border-radius: 7px;
+  padding: 17px 20px;
+  margin-bottom: 25px;
+  color: #687467;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.metrics-explanation strong {
+  color: var(--green);
+}
+
+
+/* ==========================================
+   PRODUCT RANKINGS
+========================================== */
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ranking-card {
+  display: grid;
+  grid-template-columns: 40px 100px minmax(0, 1fr) 130px;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  transition: 0.2s;
+}
+
+.ranking-card:hover {
+  border-color: #c6d2c5;
+  transform: translateY(-2px);
+}
+
+.rank-number {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ranking-image {
+  width: 100px;
+  height: 100px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #f0eee7;
+  color: var(--gold);
+  font-size: 30px;
+}
+
+.ranking-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ranking-information {
+  min-width: 0;
+}
+
+.ranking-information .product-category {
+  font-size: 9px;
+}
+
+.ranking-information h3 {
+  font-size: 19px;
+  margin: 6px 0;
+}
+
+.ranking-information > p {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.vendor-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.vendor-tags span {
+  padding: 5px 8px;
+  background: #f1f0e9;
+  border-radius: 4px;
+  color: #687467;
+  font-size: 9px;
+}
+
+.ranking-score {
+  text-align: right;
+}
+
+.ranking-score strong {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--green);
+  margin-bottom: 5px;
+}
+
+.ranking-score > span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  margin-bottom: 12px;
+}
+
+.ranking-score .score-track {
+  margin-left: auto;
+  max-width: 110px;
+}
+
+
+/* ==========================================
+   VENDOR TABLE
+========================================== */
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.metrics-table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.metrics-table th {
+  padding: 17px;
+  background: #f1f0e9;
+  color: #858b80;
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.metrics-table td {
+  padding: 20px 17px;
+  border-bottom: 1px solid var(--border);
+  color: #687467;
+  font-size: 11px;
+}
+
+.metrics-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.metrics-table tbody tr:hover {
+  background: #fbfaf6;
+}
+
+.metrics-table td strong {
+  display: block;
+  color: var(--green);
+  font-size: 12px;
+}
+
+.metrics-table td small {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  margin-top: 5px;
+}
+
+.table-rank {
+  display: inline-block;
+  padding: 7px 10px;
+  border-radius: 20px;
+  background: var(--green-light);
+  color: var(--green);
+  font-weight: 700;
+}
+
+.table-score {
+  min-width: 100px;
+}
+
+.table-score strong {
+  margin-bottom: 8px;
+}
+
+
+/* ==========================================
+   REWARDS
+========================================== */
+
+.reward-summary {
+  display: flex;
+  gap: 50px;
+  padding: 25px;
+  background: #e9eee7;
+  border-radius: 9px;
+  margin-bottom: 30px;
+}
+
+.reward-summary h2 {
+  font-size: 30px;
+  color: var(--green);
+}
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.reward-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 27px 22px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  min-width: 0;
+}
+
+.reward-unlocked {
+  border-color: #c8d8c7;
+  box-shadow: 0 8px 25px rgba(41, 76, 56, 0.04);
+}
+
+.reward-locked {
+  background: #fbfaf7;
+}
+
+.reward-icon {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 20px;
+  margin-bottom: 22px;
+}
+
+.reward-locked .reward-icon {
+  background: #efeee9;
+  color: #a2a59a;
+}
+
+.reward-card .eyebrow {
+  font-size: 9px;
+  margin-bottom: 9px;
+}
+
+.reward-card h2 {
+  font-size: 21px;
+  margin-bottom: 10px;
+}
+
+.reward-discount {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 600;
+  color: var(--green);
+  margin: 8px 0;
+}
+
+.reward-card h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.reward-card > p {
+  min-height: 38px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.reward-button {
+  width: 100%;
+  min-height: 43px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background: var(--green);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  transition: 0.2s;
+}
+
+.reward-button:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+
+.reward-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.disabled-reward {
+  background: #e9e8e1;
+  color: #858b80;
+}
+
+.coupon-display {
+  width: 100%;
+  padding: 15px;
+  background: #e9eee7;
+  border: 1px dashed #aabda8;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.coupon-display span {
+  display: block;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 9px;
+}
+
+.coupon-display strong {
+  display: block;
+  color: var(--green);
+  font-size: 14px;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
+}
+
+.coupon-display p {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+
+/* ==========================================
+   DASHBOARD NOTICES
+========================================== */
+
+.dashboard-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  background: #f1f0e9;
+  border-radius: 7px;
+  color: #687467;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.dashboard-note span {
+  color: var(--gold);
+  font-size: 20px;
+}
+
+.metrics-loading {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.dark-spinner {
+  border-color: #cbd6ca;
+  border-top-color: var(--green);
+}
+
+.metrics-error {
+  padding: 35px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.metrics-error h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.metrics-error p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+.retry-button {
+  max-width: 160px;
+}
+
+.success-message {
+  padding: 13px;
+  margin-bottom: 20px;
+  background: #e9eee7;
+  color: var(--green);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+
+/* ==========================================
+   RESPONSIVE DASHBOARD
+========================================== */
+
+@media (max-width: 1100px) {
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rewards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ranking-card {
+    grid-template-columns: 35px 85px minmax(0, 1fr) 110px;
+    gap: 13px;
+  }
+
+  .ranking-image {
+    width: 85px;
+    height: 85px;
+  }
+
+}
+
+
+@media (max-width: 750px) {
+
+  .ranking-card {
+    grid-template-columns: 35px 75px minmax(0, 1fr);
+  }
+
+  .ranking-image {
+    width: 75px;
+    height: 75px;
+  }
+
+  .ranking-score {
+    grid-column: 3;
+    text-align: left;
+  }
+
+  .ranking-score .score-track {
+    margin-left: 0;
+  }
+
+  .rewards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reward-summary {
+    gap: 25px;
+    flex-wrap: wrap;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .section-intro h1 {
+    font-size: 26px;
+  }
+
+  .content-panel {
+    padding: 20px;
+  }
+
+  .activity-item {
+    flex-wrap: wrap;
+  }
+
+  .activity-item .tier-badge {
+    margin-left: 49px;
+  }
+
+  .reward-summary {
+    padding: 20px;
+  }
+
+  .reward-summary h2 {
+    font-size: 25px;
+  }
+
+  .ranking-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .ranking-information h3 {
+    font-size: 16px;
+  }
+
+  .ranking-score strong {
+    font-size: 19px;
+  }
+
+}

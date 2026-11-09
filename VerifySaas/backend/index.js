@@ -2,17 +2,17 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import dns from "dns/promises"
+import dns from "dns/promises";
 
 import authRoutes from "./routes/auth.js";
 import handoffRoutes from "./routes/handoff.js";
+import metricsRoutes from "./routes/metrics.js";
 
 dotenv.config();
 
-dns.setServers(['1.1.1.1']); 
+dns.setServers(["1.1.1.1"]);
 
 const app = express();
-
 
 // Middleware
 app.use(
@@ -26,12 +26,12 @@ app.use(
 
 app.use(express.json());
 
-
 // API Routes
 app.use("/api/auth", authRoutes);
 
 app.use("/api/handoff", handoffRoutes);
 
+app.use("/api/metrics", metricsRoutes);
 
 // Health check
 app.get("/", (req, res) => {
@@ -39,7 +39,6 @@ app.get("/", (req, res) => {
     message: "VerifySaaS API is running.",
   });
 });
-
 
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 5002;

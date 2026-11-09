@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
+  NavLink,
   useNavigate,
   useLocation,
   useParams,
@@ -12,7 +14,6 @@ import {
 import "./App.css";
 
 const API_URL = "http://localhost:5002";
-
 const DEMOMART_URL = "http://localhost:5173";
 
 
@@ -35,7 +36,6 @@ function AppContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Preserve the handoff token when the user arrives from DemoMart.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const handoff = params.get("handoff");
@@ -55,16 +55,13 @@ function AppContent() {
     setError("");
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/auth/${mode}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/auth/${mode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
 
@@ -78,7 +75,6 @@ function AppContent() {
       setToken(data.token);
       setUser(data.user);
 
-      // Check whether the user arrived from DemoMart.
       const handoffToken = sessionStorage.getItem(
         "verifyHandoffToken"
       );
@@ -102,19 +98,16 @@ function AppContent() {
   // ==========================================
 
   const redeemHandoff = async (authToken, handoffToken) => {
-    const response = await fetch(
-      `${API_URL}/api/handoff/redeem`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          handoffToken,
-        }),
-      }
-    );
+    const response = await fetch(`${API_URL}/api/handoff/redeem`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        handoffToken,
+      }),
+    });
 
     const data = await response.json();
 
@@ -154,30 +147,43 @@ function AppContent() {
 
       <Route
         path="/"
-        element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
+        element={
+          <Navigate
+            to={token ? "/dashboard" : "/login"}
+            replace
+          />
+        }
       />
 
       <Route
         path="/login"
         element={
-          <AuthPage
-            mode="login"
-            onSubmit={handleAuth}
-            loading={loading}
-            error={error}
-          />
+          token ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <AuthPage
+              mode="login"
+              onSubmit={handleAuth}
+              loading={loading}
+              error={error}
+            />
+          )
         }
       />
 
       <Route
         path="/signup"
         element={
-          <AuthPage
-            mode="signup"
-            onSubmit={handleAuth}
-            loading={loading}
-            error={error}
-          />
+          token ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <AuthPage
+              mode="signup"
+              onSubmit={handleAuth}
+              loading={loading}
+              error={error}
+            />
+          )
         }
       />
 
@@ -200,8 +206,74 @@ function AppContent() {
         path="/dashboard"
         element={
           token ? (
-            <Dashboard
+            <MetricsPage
+              section="overview"
               user={user}
+              token={token}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/products"
+        element={
+          token ? (
+            <MetricsPage
+              section="products"
+              user={user}
+              token={token}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/vendors"
+        element={
+          token ? (
+            <MetricsPage
+              section="vendors"
+              user={user}
+              token={token}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/contributions"
+        element={
+          token ? (
+            <MetricsPage
+              section="contributions"
+              user={user}
+              token={token}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/rewards"
+        element={
+          token ? (
+            <MetricsPage
+              section="rewards"
+              user={user}
+              token={token}
               onLogout={handleLogout}
             />
           ) : (
@@ -244,7 +316,6 @@ function AuthPage({ mode, onSubmit, loading, error }) {
 
   const submitForm = (e) => {
     e.preventDefault();
-
     onSubmit(formData, mode);
   };
 
@@ -252,7 +323,7 @@ function AuthPage({ mode, onSubmit, loading, error }) {
     <div className="auth-page">
 
       <div className="auth-brand">
-        <a href="http://localhost:5173" className="brand-logo">
+        <a href={DEMOMART_URL} className="brand-logo">
           Verify<span>SaaS</span>
         </a>
 
@@ -390,17 +461,27 @@ function ReviewPage({ token, user, onLogout }) {
   useEffect(() => {
     const fetchReview = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/handoff/${sessionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `${API_URL}/api/handoff/${sessionId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Unable to load review.");
+
+        if (!response.ok) {
+          throw new Error(data.message || "Unable to load review.");
+        }
 
         setReview(data.reviewSession);
+
         if (data.reviewSession.status === "completed") {
           setReviewResult(data.reviewSession.reviewResult || null);
         }
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -413,12 +494,15 @@ function ReviewPage({ token, user, onLogout }) {
 
   useEffect(() => {
     return () => {
-      if (previewImage) URL.revokeObjectURL(previewImage);
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
     };
   }, [previewImage]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -439,7 +523,9 @@ function ReviewPage({ token, user, onLogout }) {
   };
 
   const submitForComparison = async () => {
-    if (!customerImage || !review || review.status === "completed") return;
+    if (!customerImage || !review || review.status === "completed") {
+      return;
+    }
 
     setIsComparing(true);
     setError("");
@@ -452,16 +538,25 @@ function ReviewPage({ token, user, onLogout }) {
         `${API_URL}/api/handoff/${sessionId}/compare`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           body: formData,
         }
       );
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Comparison failed.");
+
+      if (!response.ok) {
+        throw new Error(data.message || "Comparison failed.");
+      }
 
       setReviewResult(data.reviewResult);
-      setReview((current) => ({ ...current, status: "completed" }));
+      setReview((current) => ({
+        ...current,
+        status: "completed",
+      }));
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -470,11 +565,19 @@ function ReviewPage({ token, user, onLogout }) {
   };
 
   if (loading) {
-    return <div className="loading-screen">Loading your product review...</div>;
+    return (
+      <div className="loading-screen">
+        Loading your product review...
+      </div>
+    );
   }
 
   if (error && !review) {
-    return <div className="loading-screen"><p>{error}</p></div>;
+    return (
+      <div className="loading-screen">
+        <p>{error}</p>
+      </div>
+    );
   }
 
   if (!review) return null;
@@ -486,50 +589,69 @@ function ReviewPage({ token, user, onLogout }) {
   const tierDetails = {
     very_low: {
       title: "Very low visual match",
-      description: "The customer photograph shows significant visible differences from the original listing.",
+      description:
+        "The customer photograph shows significant visible differences from the original listing.",
       symbol: "!",
       className: "result-low",
     },
+
     somewhat_similar: {
       title: "Somewhat similar",
-      description: "Some features appear consistent, but there are noticeable differences or limitations.",
+      description:
+        "Some features appear consistent, but there are noticeable differences or limitations.",
       symbol: "≈",
       className: "result-medium",
     },
+
     almost_identical: {
       title: "Almost identical",
-      description: "The main visible design features appear highly consistent with the original listing.",
+      description:
+        "The main visible design features appear highly consistent with the original listing.",
       symbol: "✓",
       className: "result-high",
     },
   };
 
-  const tier = reviewResult ? tierDetails[reviewResult.tier] : null;
+  const tier = reviewResult
+    ? tierDetails[reviewResult.tier]
+    : null;
 
   return (
     <div className="app-layout">
+
       <Sidebar onLogout={onLogout} />
 
       <main className="main-content">
+
         <div className="topbar">
           <div>
             <span className="eyebrow">PRODUCT VERIFICATION</span>
             <h2>Review your purchase</h2>
           </div>
+
           <div className="user-profile">
-            <span className="user-avatar">{user?.name?.charAt(0).toUpperCase()}</span>
+            <span className="user-avatar">
+              {user?.name?.charAt(0).toUpperCase()}
+            </span>
+
             <span>{user?.name}</span>
           </div>
         </div>
 
         <div className="review-intro">
           <h1>Let's verify what you received.</h1>
-          <p>Compare your purchased product with its original listing by uploading a photograph of the item.</p>
+
+          <p>
+            Compare your purchased product with its original listing
+            by uploading a photograph of the item.
+          </p>
         </div>
 
         <div className="product-information">
+
           <div className="section-heading">
             <span className="step-number">01</span>
+
             <div>
               <h3>Purchase information</h3>
               <p>These details were retrieved from DemoMart.</p>
@@ -537,30 +659,62 @@ function ReviewPage({ token, user, onLogout }) {
           </div>
 
           <div className="product-card">
+
             <div className="listing-image">
               <img
                 src={originalImage}
                 alt={review.productName}
-                onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.png";
+                }}
               />
-              <span className="image-label">ORIGINAL LISTING</span>
+
+              <span className="image-label">
+                ORIGINAL LISTING
+              </span>
             </div>
 
             <div className="product-details">
-              <span className="product-category">{review.category}</span>
+
+              <span className="product-category">
+                {review.category}
+              </span>
+
               <h2>{review.productName}</h2>
-              <div className="detail-row"><span>Vendor</span><strong>{review.vendorName}</strong></div>
-              <div className="detail-row"><span>Vendor ID</span><strong>{review.vendorId}</strong></div>
-              <div className="detail-row"><span>Product ID</span><strong>{review.sourceProductId}</strong></div>
-              <div className="detail-row"><span>Order reference</span><strong>{review.sourceOrderId}</strong></div>
-              <div className="verified-badge">✓ Purchase verified through DemoMart</div>
+
+              <div className="detail-row">
+                <span>Vendor</span>
+                <strong>{review.vendorName}</strong>
+              </div>
+
+              <div className="detail-row">
+                <span>Vendor ID</span>
+                <strong>{review.vendorId}</strong>
+              </div>
+
+              <div className="detail-row">
+                <span>Product ID</span>
+                <strong>{review.sourceProductId}</strong>
+              </div>
+
+              <div className="detail-row">
+                <span>Order reference</span>
+                <strong>{review.sourceOrderId}</strong>
+              </div>
+
+              <div className="verified-badge">
+                ✓ Purchase verified through DemoMart
+              </div>
+
             </div>
           </div>
         </div>
 
         <div className="upload-section">
+
           <div className="section-heading">
             <span className="step-number">02</span>
+
             <div>
               <h3>Upload your product photograph</h3>
               <p>Show us the item you actually received.</p>
@@ -568,28 +722,53 @@ function ReviewPage({ token, user, onLogout }) {
           </div>
 
           <div className="upload-card">
+
             {review.status === "completed" ? (
               <div className="completed-notice">
                 <span className="completed-check">✓</span>
+
                 <div>
                   <h3>Review submitted successfully</h3>
-                  <p>This purchased item has already been reviewed. You cannot submit another comparison for it.</p>
+
+                  <p>
+                    This purchased item has already been reviewed.
+                    You cannot submit another comparison for it.
+                  </p>
                 </div>
               </div>
             ) : !previewImage ? (
               <label className="upload-area">
+
                 <div className="upload-icon">↑</div>
+
                 <h3>Upload your photograph</h3>
-                <p>Click to browse or select an image from your device.</p>
+
+                <p>
+                  Click to browse or select an image from your device.
+                </p>
+
                 <span>JPG, PNG or WEBP · Maximum 5MB</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} />
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageUpload}
+                />
+
               </label>
             ) : (
               <div className="uploaded-preview">
-                <img src={previewImage} alt="Your uploaded product" />
+
+                <img
+                  src={previewImage}
+                  alt="Your uploaded product"
+                />
+
                 <div>
                   <h3>Photograph uploaded</h3>
+
                   <p>{customerImage?.name}</p>
+
                   <button
                     className="text-button"
                     disabled={isComparing}
@@ -601,10 +780,15 @@ function ReviewPage({ token, user, onLogout }) {
                     Remove and upload another
                   </button>
                 </div>
+
               </div>
             )}
 
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
 
             {review.status !== "completed" && (
               <button
@@ -612,42 +796,79 @@ function ReviewPage({ token, user, onLogout }) {
                 disabled={!customerImage || isComparing}
                 onClick={submitForComparison}
               >
-                {isComparing ? <><span className="button-spinner" /> Comparing photographs...</> : "Submit for verification →"}
+                {isComparing ? (
+                  <>
+                    <span className="button-spinner" />
+                    Comparing photographs...
+                  </>
+                ) : (
+                  "Submit for verification →"
+                )}
               </button>
             )}
 
             <p className="upload-note">
-              AI checks visible similarities and differences. It cannot prove authenticity or product quality.
+              AI checks visible similarities and differences.
+              It cannot prove authenticity or product quality.
             </p>
+
           </div>
         </div>
 
         {reviewResult && tier && (
           <section className={`comparison-result ${tier.className}`}>
-            <span className="eyebrow">AI COMPARISON RESULT</span>
+
+            <span className="eyebrow">
+              AI COMPARISON RESULT
+            </span>
+
             <div className="result-heading">
-              <span className="result-symbol">{tier.symbol}</span>
+
+              <span className="result-symbol">
+                {tier.symbol}
+              </span>
+
               <div>
                 <h2>{tier.title}</h2>
                 <p>{tier.description}</p>
               </div>
+
             </div>
-            <p className="result-summary">{reviewResult.summary}</p>
+
+            <p className="result-summary">
+              {reviewResult.summary}
+            </p>
+
             {reviewResult.differences?.length > 0 && (
               <div className="result-differences">
+
                 <h3>Visible differences / observations</h3>
+
                 <ul>
                   {reviewResult.differences.map((difference, index) => (
                     <li key={index}>{difference}</li>
                   ))}
                 </ul>
+
               </div>
             )}
+
             <p className="result-disclaimer">
-              This is an AI-assisted visual assessment based on the two submitted photographs, not a guarantee of authenticity or quality.
+              This is an AI-assisted visual assessment based on
+              the two submitted photographs, not a guarantee
+              of authenticity or quality.
             </p>
+
+            <button
+              className="secondary-button"
+              onClick={() => window.location.href = "/dashboard"}
+            >
+              Go to my dashboard →
+            </button>
+
           </section>
         )}
+
       </main>
     </div>
   );
@@ -662,29 +883,59 @@ function Sidebar({ onLogout }) {
   return (
     <aside className="sidebar">
 
-      <a href="/dashboard" className="brand-logo">
+      <NavLink to="/dashboard" className="brand-logo">
         Verify<span>SaaS</span>
-      </a>
+      </NavLink>
 
-      <div className="sidebar-label">WORKSPACE</div>
+      <div className="sidebar-label">
+        WORKSPACE
+      </div>
 
       <nav className="sidebar-nav">
 
-        <a href="/dashboard">⌂ &nbsp; Overview</a>
+        <NavLink
+          to="/dashboard"
+          end
+          className={({ isActive }) => isActive ? "active" : ""}
+        >
+          ⌂ &nbsp; Overview
+        </NavLink>
 
-        <a href="/dashboard">▤ &nbsp; Product metrics</a>
+        <NavLink
+          to="/products"
+          className={({ isActive }) => isActive ? "active" : ""}
+        >
+          ▤ &nbsp; Product metrics
+        </NavLink>
 
-        <a href="/dashboard">♧ &nbsp; Vendor metrics</a>
+        <NavLink
+          to="/vendors"
+          className={({ isActive }) => isActive ? "active" : ""}
+        >
+          ♧ &nbsp; Vendor metrics
+        </NavLink>
 
-        <a href="/dashboard">◉ &nbsp; My contributions</a>
+        <NavLink
+          to="/contributions"
+          className={({ isActive }) => isActive ? "active" : ""}
+        >
+          ◉ &nbsp; My contributions
+        </NavLink>
 
-        <a href="/dashboard">✧ &nbsp; Rewards</a>
+        <NavLink
+          to="/rewards"
+          className={({ isActive }) => isActive ? "active" : ""}
+        >
+          ✧ &nbsp; Rewards
+        </NavLink>
 
       </nav>
 
       <div className="sidebar-bottom">
 
-        <div className="sidebar-label">ACCOUNT</div>
+        <div className="sidebar-label">
+          ACCOUNT
+        </div>
 
         <button onClick={onLogout}>
           ↪ &nbsp; Sign out
@@ -698,10 +949,113 @@ function Sidebar({ onLogout }) {
 
 
 // ==========================================
-// DASHBOARD PLACEHOLDER
+// METRICS PAGE
 // ==========================================
 
-function Dashboard({ user, onLogout }) {
+function MetricsPage({ section, user, token, onLogout }) {
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [claiming, setClaiming] = useState(null);
+  const [claimMessage, setClaimMessage] = useState("");
+
+  const fetchMetrics = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/metrics/overview`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to retrieve dashboard information."
+        );
+      }
+
+      setMetrics(data);
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [token]);
+
+  const claimReward = async (milestone) => {
+    setClaiming(milestone);
+    setClaimMessage("");
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/metrics/rewards/${milestone}/claim`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to claim reward.");
+      }
+
+      setClaimMessage(data.message || "Reward claimed successfully.");
+
+      await fetchMetrics();
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setClaiming(null);
+    }
+  };
+
+  const pageDetails = {
+    overview: {
+      eyebrow: "YOUR WORKSPACE",
+      title: "Dashboard",
+    },
+
+    products: {
+      eyebrow: "PLATFORM INSIGHTS",
+      title: "Product metrics",
+    },
+
+    vendors: {
+      eyebrow: "PLATFORM INSIGHTS",
+      title: "Vendor metrics",
+    },
+
+    contributions: {
+      eyebrow: "YOUR ACTIVITY",
+      title: "My contributions",
+    },
+
+    rewards: {
+      eyebrow: "YOUR ACHIEVEMENTS",
+      title: "Rewards",
+    },
+  };
+
+  const page = pageDetails[section];
+
   return (
     <div className="app-layout">
 
@@ -710,68 +1064,754 @@ function Dashboard({ user, onLogout }) {
       <main className="main-content">
 
         <div className="topbar">
+
           <div>
-            <span className="eyebrow">YOUR WORKSPACE</span>
-            <h2>Dashboard</h2>
+            <span className="eyebrow">
+              {page.eyebrow}
+            </span>
+
+            <h2>{page.title}</h2>
           </div>
 
           <div className="user-profile">
+
             <span className="user-avatar">
               {user?.name?.charAt(0).toUpperCase()}
             </span>
 
-            {user?.name}
-          </div>
-        </div>
+            <span>{user?.name}</span>
 
-        <div className="dashboard-welcome">
-          <span className="eyebrow">WELCOME BACK</span>
-
-          <h1>Hello, {user?.name}.</h1>
-
-          <p>
-            Your contributions help make online shopping
-            more transparent and trustworthy.
-          </p>
-        </div>
-
-        <div className="dashboard-cards">
-
-          <div className="dashboard-card">
-            <span>PRODUCT REVIEWS</span>
-            <h2>0</h2>
-            <p>Products you've reviewed</p>
-          </div>
-
-          <div className="dashboard-card">
-            <span>CONTRIBUTION POINTS</span>
-            <h2>0</h2>
-            <p>Your verification activity</p>
-          </div>
-
-          <div className="dashboard-card">
-            <span>REWARDS</span>
-            <h2>0</h2>
-            <p>Coupons available to claim</p>
           </div>
 
         </div>
 
-        <div className="coming-soon">
-          <span className="eyebrow">YOUR ACTIVITY</span>
+        {loading ? (
+          <div className="metrics-loading">
+            <span className="button-spinner dark-spinner" />
+            Loading your dashboard...
+          </div>
+        ) : error && !metrics ? (
+          <div className="metrics-error">
+            <h3>Unable to load dashboard</h3>
+            <p>{error}</p>
 
-          <h2>Your verification journey starts here.</h2>
+            <button
+              className="primary-button retry-button"
+              onClick={fetchMetrics}
+            >
+              Try again
+            </button>
+          </div>
+        ) : metrics ? (
+          <>
 
-          <p>
-            Once you review products, your activity,
-            contributions and rewards will appear here.
-          </p>
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
 
-        </div>
+            {claimMessage && (
+              <div className="success-message">
+                ✓ {claimMessage}
+              </div>
+            )}
+
+            {section === "overview" && (
+              <OverviewSection
+                metrics={metrics}
+                user={user}
+              />
+            )}
+
+            {section === "products" && (
+              <ProductsSection
+                products={metrics.products || []}
+              />
+            )}
+
+            {section === "vendors" && (
+              <VendorsSection
+                vendors={metrics.vendors || []}
+              />
+            )}
+
+            {section === "contributions" && (
+              <ContributionsSection
+                contributions={metrics.contributions}
+                rewards={metrics.rewards || []}
+              />
+            )}
+
+            {section === "rewards" && (
+              <RewardsSection
+                rewards={metrics.rewards || []}
+                totalReviews={metrics.contributions?.totalReviews || 0}
+                onClaim={claimReward}
+                claiming={claiming}
+              />
+            )}
+
+          </>
+        ) : null}
 
       </main>
     </div>
   );
+}
+
+
+// ==========================================
+// OVERVIEW
+// ==========================================
+
+function OverviewSection({ metrics, user }) {
+  const contributions = metrics.contributions || {};
+  const rewards = metrics.rewards || [];
+
+  const totalReviews = contributions.totalReviews || 0;
+  const points = contributions.contributionPoints || 0;
+
+  const availableRewards = rewards.filter(
+    (reward) => reward.unlocked && !reward.claimed
+  ).length;
+
+  const nextMilestone = rewards.find(
+    (reward) => !reward.unlocked
+  );
+
+  const recentReviews = (contributions.reviews || []).slice(0, 5);
+
+  return (
+    <>
+
+      <div className="dashboard-welcome">
+
+        <span className="eyebrow">
+          WELCOME BACK
+        </span>
+
+        <h1>Hello, {user?.name}.</h1>
+
+        <p>
+          Your contributions help make online shopping
+          more transparent and trustworthy.
+        </p>
+
+      </div>
+
+      <div className="dashboard-cards">
+
+        <div className="dashboard-card">
+          <span>PRODUCT REVIEWS</span>
+          <h2>{totalReviews}</h2>
+          <p>Products you've reviewed</p>
+        </div>
+
+        <div className="dashboard-card">
+          <span>CONTRIBUTION POINTS</span>
+          <h2>{points}</h2>
+          <p>10 points per completed review</p>
+        </div>
+
+        <div className="dashboard-card">
+          <span>AVAILABLE REWARDS</span>
+          <h2>{availableRewards}</h2>
+          <p>Unlocked coupons waiting to be claimed</p>
+        </div>
+
+      </div>
+
+      <div className="overview-grid">
+
+        <section className="content-panel">
+
+          <div className="panel-heading">
+            <div>
+              <span className="eyebrow">YOUR ACTIVITY</span>
+              <h2>Recent reviews</h2>
+            </div>
+
+            <NavLink to="/contributions">
+              View all →
+            </NavLink>
+          </div>
+
+          {recentReviews.length === 0 ? (
+            <EmptyState
+              title="Your verification journey starts here."
+              description="Your completed product reviews will appear here."
+            />
+          ) : (
+            <div className="activity-list">
+
+              {recentReviews.map((review) => (
+                <div className="activity-item" key={review.id}>
+
+                  <div className="activity-icon">
+                    ✓
+                  </div>
+
+                  <div className="activity-details">
+                    <h3>{review.productName}</h3>
+                    <p>{review.vendorName}</p>
+                  </div>
+
+                  <TierBadge tier={review.tier} />
+
+                </div>
+              ))}
+
+            </div>
+          )}
+
+        </section>
+
+        <section className="content-panel milestone-panel">
+
+          <span className="eyebrow">
+            YOUR NEXT ACHIEVEMENT
+          </span>
+
+          {nextMilestone ? (
+            <>
+              <h2>{nextMilestone.title}</h2>
+
+              <p>{nextMilestone.description}</p>
+
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (totalReviews / nextMilestone.milestone) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <p className="progress-caption">
+                {totalReviews} of {nextMilestone.milestone} reviews completed
+              </p>
+
+              <NavLink
+                to="/rewards"
+                className="secondary-button"
+              >
+                Explore rewards →
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <h2>All milestones unlocked!</h2>
+
+              <p>
+                Congratulations. You've reached every available
+                demonstration reward milestone.
+              </p>
+
+              <NavLink
+                to="/rewards"
+                className="secondary-button"
+              >
+                View your rewards →
+              </NavLink>
+            </>
+          )}
+
+        </section>
+
+      </div>
+
+      <div className="dashboard-note">
+        <span>✧</span>
+        Your reviews contribute to product and vendor insights
+        across the VerifySaaS platform.
+      </div>
+
+    </>
+  );
+}
+
+
+// ==========================================
+// PRODUCT METRICS
+// ==========================================
+
+function ProductsSection({ products }) {
+  return (
+    <>
+
+      <div className="section-intro">
+        <h1>Product comparison rankings</h1>
+
+        <p>
+          Explore how similar product listings compare across
+          vendors using completed customer reviews.
+        </p>
+      </div>
+
+      <div className="metrics-explanation">
+        <strong>How rankings work:</strong> Each review contributes
+        a visual similarity score. Higher average scores appear
+        higher in the ranking.
+      </div>
+
+      {products.length === 0 ? (
+        <EmptyState
+          title="No product metrics yet."
+          description="Completed customer reviews will generate product rankings here."
+        />
+      ) : (
+        <div className="ranking-list">
+
+          {products.map((product) => (
+            <div className="ranking-card" key={`${product.productName}-${product.category}`}>
+
+              <div className="rank-number">
+                #{product.rank}
+              </div>
+
+              <div className="ranking-image">
+                {product.listingImage ? (
+                  <img
+                    src={
+                      product.listingImage.startsWith("http")
+                        ? product.listingImage
+                        : `${DEMOMART_URL}${product.listingImage}`
+                    }
+                    alt={product.productName}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span>◇</span>
+                )}
+              </div>
+
+              <div className="ranking-information">
+
+                <span className="product-category">
+                  {product.category}
+                </span>
+
+                <h3>{product.productName}</h3>
+
+                <p>
+                  {product.totalReviews} completed review(s)
+                </p>
+
+                <div className="vendor-tags">
+                  {product.vendors?.map((vendor) => (
+                    <span key={vendor}>{vendor}</span>
+                  ))}
+                </div>
+
+              </div>
+
+              <div className="ranking-score">
+                <strong>{product.averageScore} / 3</strong>
+
+                <span>Average score</span>
+
+                <ScoreBar score={product.averageScore} />
+
+              </div>
+
+            </div>
+          ))}
+
+        </div>
+      )}
+
+    </>
+  );
+}
+
+
+// ==========================================
+// VENDOR METRICS
+// ==========================================
+
+function VendorsSection({ vendors }) {
+  return (
+    <>
+
+      <div className="section-intro">
+        <h1>Vendor performance</h1>
+
+        <p>
+          Compare vendor performance using customer-submitted
+          visual comparison results.
+        </p>
+      </div>
+
+      <div className="metrics-explanation">
+        Vendor scores represent the average visual similarity
+        scores of their reviewed products.
+      </div>
+
+      {vendors.length === 0 ? (
+        <EmptyState
+          title="No vendor metrics yet."
+          description="Vendor performance will appear once customers complete reviews."
+        />
+      ) : (
+        <div className="table-wrapper">
+
+          <table className="metrics-table">
+
+            <thead>
+              <tr>
+                <th>RANK</th>
+                <th>VENDOR</th>
+                <th>PRODUCTS</th>
+                <th>REVIEWS</th>
+                <th>AVERAGE SCORE</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {vendors.map((vendor) => (
+                <tr key={vendor.vendorId}>
+
+                  <td>
+                    <span className="table-rank">
+                      #{vendor.rank}
+                    </span>
+                  </td>
+
+                  <td>
+                    <strong>{vendor.vendorName}</strong>
+                    <small>{vendor.vendorId}</small>
+                  </td>
+
+                  <td>{vendor.totalProducts}</td>
+
+                  <td>{vendor.totalReviews}</td>
+
+                  <td>
+                    <div className="table-score">
+                      <strong>{vendor.averageScore} / 3</strong>
+                      <ScoreBar score={vendor.averageScore} />
+                    </div>
+                  </td>
+
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+
+        </div>
+      )}
+
+    </>
+  );
+}
+
+
+// ==========================================
+// MY CONTRIBUTIONS
+// ==========================================
+
+function ContributionsSection({ contributions, rewards }) {
+  const totalReviews = contributions?.totalReviews || 0;
+  const points = contributions?.contributionPoints || 0;
+  const averageScore = contributions?.averageScore || 0;
+
+  const nextMilestone = rewards.find(
+    (reward) => !reward.unlocked
+  );
+
+  return (
+    <>
+
+      <div className="section-intro">
+        <h1>Your contribution journey</h1>
+
+        <p>
+          Every completed review helps build a more transparent
+          shopping experience.
+        </p>
+      </div>
+
+      <div className="dashboard-cards">
+
+        <div className="dashboard-card">
+          <span>COMPLETED REVIEWS</span>
+          <h2>{totalReviews}</h2>
+          <p>Your verified product comparisons</p>
+        </div>
+
+        <div className="dashboard-card">
+          <span>POINTS EARNED</span>
+          <h2>{points}</h2>
+          <p>10 points per review</p>
+        </div>
+
+        <div className="dashboard-card">
+          <span>AVERAGE MATCH SCORE</span>
+          <h2>{averageScore} / 3</h2>
+          <p>Across your submitted reviews</p>
+        </div>
+
+      </div>
+
+      {nextMilestone && (
+        <section className="content-panel contribution-progress">
+
+          <span className="eyebrow">
+            NEXT REWARD MILESTONE
+          </span>
+
+          <h2>{nextMilestone.title}</h2>
+
+          <p>
+            Complete {nextMilestone.milestone} reviews
+            to unlock a {nextMilestone.discountPercent}% demonstration coupon.
+          </p>
+
+          <div className="progress-track">
+            <div
+              className="progress-fill"
+              style={{
+                width: `${Math.min(
+                  100,
+                  (totalReviews / nextMilestone.milestone) * 100
+                )}%`,
+              }}
+            />
+          </div>
+
+          <p className="progress-caption">
+            {totalReviews} / {nextMilestone.milestone} reviews
+          </p>
+
+        </section>
+      )}
+
+      <section className="content-panel">
+
+        <div className="panel-heading">
+          <div>
+            <span className="eyebrow">REVIEW HISTORY</span>
+            <h2>Your completed reviews</h2>
+          </div>
+        </div>
+
+        {!contributions?.reviews?.length ? (
+          <EmptyState
+            title="You haven't submitted a review yet."
+            description="Your completed product comparisons will be listed here."
+          />
+        ) : (
+          <div className="activity-list">
+
+            {contributions.reviews.map((review) => (
+              <div className="activity-item" key={review.id}>
+
+                <div className="activity-icon">
+                  ✓
+                </div>
+
+                <div className="activity-details">
+                  <h3>{review.productName}</h3>
+                  <p>
+                    {review.vendorName} · {formatDate(review.comparedAt)}
+                  </p>
+                </div>
+
+                <TierBadge tier={review.tier} />
+
+              </div>
+            ))}
+
+          </div>
+        )}
+
+      </section>
+
+    </>
+  );
+}
+
+
+// ==========================================
+// REWARDS
+// ==========================================
+
+function RewardsSection({
+  rewards,
+  totalReviews,
+  onClaim,
+  claiming,
+}) {
+  return (
+    <>
+
+      <div className="section-intro">
+        <h1>Your contributions deserve recognition.</h1>
+
+        <p>
+          Complete product reviews to unlock demonstration
+          coupons and celebrate your contribution milestones.
+        </p>
+      </div>
+
+      <div className="reward-summary">
+        <div>
+          <span className="eyebrow">YOUR REVIEWS</span>
+          <h2>{totalReviews}</h2>
+        </div>
+
+        <div>
+          <span className="eyebrow">AVAILABLE MILESTONES</span>
+          <h2>{rewards.filter((r) => r.unlocked).length} / {rewards.length}</h2>
+        </div>
+      </div>
+
+      <div className="rewards-grid">
+
+        {rewards.map((reward) => (
+          <div
+            className={`reward-card ${
+              reward.unlocked ? "reward-unlocked" : "reward-locked"
+            }`}
+            key={reward.milestone}
+          >
+
+            <div className="reward-icon">
+              {reward.claimed ? "✓" : reward.unlocked ? "✧" : "◇"}
+            </div>
+
+            <span className="eyebrow">
+              {reward.unlocked
+                ? reward.claimed
+                  ? "REWARD CLAIMED"
+                  : "REWARD UNLOCKED"
+                : "LOCKED MILESTONE"}
+            </span>
+
+            <h2>{reward.title}</h2>
+
+            <div className="reward-discount">
+              {reward.discountPercent}%
+            </div>
+
+            <h3>Demonstration coupon</h3>
+
+            <p>{reward.description}</p>
+
+            {!reward.unlocked ? (
+              <button
+                className="reward-button disabled-reward"
+                disabled
+              >
+                Complete {reward.milestone} reviews to unlock
+              </button>
+            ) : reward.claimed ? (
+              <div className="coupon-display">
+
+                <span>YOUR COUPON CODE</span>
+
+                <strong>{reward.couponCode}</strong>
+
+                <p>
+                  This is a demonstration coupon for the VerifySaaS MVP.
+                </p>
+
+              </div>
+            ) : (
+              <button
+                className="reward-button"
+                disabled={claiming === reward.milestone}
+                onClick={() => onClaim(reward.milestone)}
+              >
+                {claiming === reward.milestone
+                  ? "Claiming..."
+                  : "Claim your reward →"}
+              </button>
+            )}
+
+          </div>
+        ))}
+
+      </div>
+
+      <div className="dashboard-note">
+        <span>✧</span>
+        These coupons demonstrate the VerifySaaS rewards system.
+        They are stored in your account and are not redeemable
+        on DemoMart.
+      </div>
+
+    </>
+  );
+}
+
+
+// ==========================================
+// SHARED COMPONENTS
+// ==========================================
+
+function EmptyState({ title, description }) {
+  return (
+    <div className="empty-state">
+
+      <div className="empty-icon">◇</div>
+
+      <h3>{title}</h3>
+
+      <p>{description}</p>
+
+    </div>
+  );
+}
+
+
+function TierBadge({ tier }) {
+  const labels = {
+    very_low: "Very low match",
+    somewhat_similar: "Somewhat similar",
+    almost_identical: "Almost identical",
+  };
+
+  return (
+    <span className={`tier-badge tier-${tier || "unknown"}`}>
+      {labels[tier] || "Not available"}
+    </span>
+  );
+}
+
+
+function ScoreBar({ score }) {
+  const percentage = Math.min(
+    100,
+    Math.max(0, (Number(score) / 3) * 100)
+  );
+
+  return (
+    <div className="score-track">
+      <div
+        className="score-fill"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  );
+}
+
+
+function formatDate(date) {
+  if (!date) return "Date unavailable";
+
+  return new Date(date).toLocaleDateString("en-KE", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 

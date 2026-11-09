@@ -1,5 +1,32 @@
 import mongoose from "mongoose";
 
+const ClaimedRewardSchema = new mongoose.Schema(
+  {
+    milestone: {
+      type: Number,
+      required: true,
+    },
+
+    couponCode: {
+      type: String,
+      required: true,
+    },
+
+    discountPercent: {
+      type: Number,
+      required: true,
+    },
+
+    claimedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const UserSchema = new mongoose.Schema(
   {
     name: {
@@ -19,6 +46,11 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+
+    claimedRewards: {
+      type: [ClaimedRewardSchema],
+      default: [],
     },
   },
   {
