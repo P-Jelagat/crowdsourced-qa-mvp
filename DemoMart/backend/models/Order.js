@@ -1,33 +1,79 @@
 import mongoose from "mongoose";
 
-const OrderItemSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  quantity: { type: Number, required: true },
-  pricePaid: { type: Number, required: true } // Static snapshot of price at checkout time
-}, { _id: false });
+const OrderItemSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: String,
+      default: "",
+    },
 
-const OrderSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+    vendorId: {
+      type: String,
+      default: "",
+    },
+
+    vendorName: {
+      type: String,
+      default: "",
+    },
+
+    name: {
+      type: String,
+      required: true,
+    },
+
+    category: {
+      type: String,
+      default: "",
+    },
+
+    image: {
+      type: String,
+      default: "",
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+    },
+
+    pricePaid: {
+      type: Number,
+      required: true,
+    },
   },
-  orderId: { 
-    type: String, 
-    required: true, 
-    unique: true // Transparent audit tracking format (e.g., DM-394821)
+  { _id: false }
+);
+
+const OrderSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    date: {
+      type: String,
+      required: true,
+    },
+
+    items: [OrderItemSchema],
+
+    subtotal: {
+      type: Number,
+      required: true,
+    },
   },
-  date: { 
-    type: String, 
-    required: true 
-  },
-  items: [OrderItemSchema],
-  subtotal: { 
-    type: Number, 
-    required: true 
+  {
+    timestamps: true,
   }
-}, { 
-  timestamps: true // Tracks exactly when the purchase was executed
-});
+);
 
-export default mongoose.model('Order', OrderSchema);
+export default mongoose.model("Order", OrderSchema);

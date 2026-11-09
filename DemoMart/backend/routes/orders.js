@@ -30,6 +30,7 @@ const authGuard = (req, res, next) => {
   }
 };
 
+
 // GET ORDER HISTORY
 router.get("/", authGuard, async (req, res) => {
   try {
@@ -38,6 +39,7 @@ router.get("/", authGuard, async (req, res) => {
     }).sort({ createdAt: -1 });
 
     res.status(200).json(orders);
+
   } catch (error) {
     console.error("Order history error:", error);
 
@@ -46,6 +48,7 @@ router.get("/", authGuard, async (req, res) => {
     });
   }
 });
+
 
 // CREATE NEW ORDER
 router.post("/", authGuard, async (req, res) => {
@@ -58,16 +61,20 @@ router.post("/", authGuard, async (req, res) => {
       });
     }
 
-    const validItems = items.every(
-      (item) =>
-        item.name &&
-        Number(item.quantity) > 0 &&
-        Number(item.price) >= 0
+    const validItems = items.every((item) =>
+      item.productId &&
+      item.vendorId &&
+      item.name &&
+      item.vendorName &&
+      item.image &&
+      Number(item.quantity) > 0 &&
+      Number.isFinite(Number(item.price)) &&
+      Number(item.price) >= 0
     );
 
     if (!validItems) {
       return res.status(400).json({
-        message: "One or more order items are invalid.",
+        message: "One or more order items are missing product information.",
       });
     }
 
@@ -78,7 +85,12 @@ router.post("/", authGuard, async (req, res) => {
     }
 
     const orderItems = items.map((item) => ({
+      productId: item.productId,
+      vendorId: item.vendorId,
+      vendorName: item.vendorName,
       name: item.name,
+      category: item.category || "",
+      image: item.image,
       quantity: Number(item.quantity),
       pricePaid: Number(item.price),
     }));
@@ -104,6 +116,7 @@ router.post("/", authGuard, async (req, res) => {
       orderId: newOrder.orderId,
       order: newOrder,
     });
+
   } catch (error) {
     console.error("Checkout error:", error);
 
@@ -112,5 +125,106 @@ router.post("/", authGuard, async (req, res) => {
     });
   }
 });
+
+
+// CREATE VERIFYSAAS REVIEW SESSION
+router.post("/:orderId/review-session", authGuard, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { productId } = req.body;
+
+    // VERIFYSAAS MUST HAVE THE SAME HANDOFF SECRET
+    const handoffSecret = process.env.VERIFYSAAS_HANDOFF_SECRET;
+
+    if (!handoffSecret) {
+      return res.status(500).json({
+        message: "Review integration has not been configured.",
+      });
+    }
+
+    if (!productId) {
+      return res.status(400).json({
+        message: "Product information is missing.",
+      });
+    }
+
+    // FIND THE ORDER BELONGING TO THIS CUSTOMER
+    const order = await Order.findOne({
+      orderId,
+      userId: req.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found.",
+      });
+    }
+
+    // CHECK WHETHER THE PRODUCT WAS ACTUALLY PURCHASED
+    const purchasedItem = order.items.find(
+      (item) => item.productId === productId
+    );
+
+    if (!purchasedItem) {
+      return res.status(403).json({
+        message: "This product does not belong to the selected order.",
+      });
+    }
+
+    if (
+      !purchasedItem.vendorId ||
+      !purchasedItem.image ||
+      !purchasedItem.name
+    ) {
+      return res.status(400).json({
+        message: "This order does not contain the information required for a product review. Please use a newer order.",
+      });
+    }
+
+    // CREATE A SHORT-LIVED SIGNED HANDOFF TOKEN
+    const handoffToken = jwt.sign(
+      {
+        source: "demomart",
+
+        orderId: order.orderId,
+
+        productId: purchasedItem.productId,
+
+        vendorId: purchasedItem.vendorId,
+
+        vendorName: purchasedItem.vendorName,
+
+        productName: purchasedItem.name,
+
+        category: purchasedItem.category,
+
+        listingImage: purchasedItem.image,
+
+        quantity: purchasedItem.quantity,
+
+        customerId: String(req.userId),
+      },
+      handoffSecret,
+      {
+        expiresIn: "5m",
+        issuer: "demomart",
+        audience: "verifysaas",
+      }
+    );
+
+    res.status(200).json({
+      message: "Review session created successfully.",
+      handoffToken,
+    });
+
+  } catch (error) {
+    console.error("Review session error:", error);
+
+    res.status(500).json({
+      message: "Unable to start the product review.",
+    });
+  }
+});
+
 
 export default router;

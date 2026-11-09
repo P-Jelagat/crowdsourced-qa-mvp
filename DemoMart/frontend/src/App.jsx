@@ -3,6 +3,8 @@ import "./App.css";
 import { vendors, products, productTypes } from "./data/products";
 
 const API_URL = "http://localhost:5001";
+const VERIFYSAAS_URL =
+  import.meta.env.VITE_VERIFYSAAS_URL || "http://localhost:5174";
 
 function App() {
   const [search, setSearch] = useState("");
@@ -254,11 +256,56 @@ function App() {
   };
 
   // TEMPORARY REVIEW BUTTON ACTION
-  const handleReviewProduct = (item) => {
-    alert(
-      `VerifySaaS product reviews will be available here for ${item.name}.`
+const handleReviewProduct = async (item, orderId) => {
+  try {
+    if (!token || !user) {
+      alert("Please sign in to DemoMart before reviewing a product.");
+      return;
+    }
+
+    if (!orderId) {
+      throw new Error("Order information is missing.");
+    }
+
+    if (!item || !item.productId) {
+      throw new Error(
+        "This order does not contain the product information required for a review."
+      );
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/orders/${orderId}/review-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: item.productId,
+        }),
+      }
     );
-  };
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Unable to start your product review."
+      );
+    }
+
+    const destination = `${VERIFYSAAS_URL}/login?handoff=${encodeURIComponent(
+      data.handoffToken
+    )}`;
+
+    window.location.assign(destination);
+
+  } catch (error) {
+    console.error("VerifySaaS review error:", error);
+    alert(error.message);
+  }
+};
 
   // CHECKOUT
   const handleCheckout = async () => {
@@ -282,7 +329,12 @@ function App() {
 
     try {
       const orderItems = cart.map((item) => ({
+        productId: item.id,
+        vendorId: item.vendorId,
+        vendorName: item.vendorName,
         name: item.name,
+        category: item.category,
+        image: item.image,
         quantity: item.quantity,
         price: item.price,
       }));
@@ -1030,10 +1082,10 @@ function App() {
                                   type="button"
                                   className="review-product-btn"
                                   onClick={() =>
-                                    handleReviewProduct(item)
+                                    handleReviewProduct(item, order.orderId)
                                   }
                                 >
-                                  Review Product →
+                                  Review on VerifySaaS →
                                 </button>
                               </div>
                             </div>
