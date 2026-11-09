@@ -253,6 +253,13 @@ function App() {
     }
   };
 
+  // TEMPORARY REVIEW BUTTON ACTION
+  const handleReviewProduct = (item) => {
+    alert(
+      `VerifySaaS product reviews will be available here for ${item.name}.`
+    );
+  };
+
   // CHECKOUT
   const handleCheckout = async () => {
     setCheckoutMessage("");
@@ -1004,15 +1011,31 @@ function App() {
                               className="order-product"
                               key={`${order._id}-${index}`}
                             >
-                              <span>
-                                {item.name} × {item.quantity}
-                              </span>
+                              <div className="order-product-details">
+                                <h4>{item.name}</h4>
 
-                              <strong>
-                                {formatPrice(
-                                  item.pricePaid * item.quantity
-                                )}
-                              </strong>
+                                <span>
+                                  Quantity: {item.quantity}
+                                </span>
+                              </div>
+
+                              <div className="order-product-actions">
+                                <strong>
+                                  {formatPrice(
+                                    item.pricePaid * item.quantity
+                                  )}
+                                </strong>
+
+                                <button
+                                  type="button"
+                                  className="review-product-btn"
+                                  onClick={() =>
+                                    handleReviewProduct(item)
+                                  }
+                                >
+                                  Review Product →
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
