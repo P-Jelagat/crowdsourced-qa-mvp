@@ -69,6 +69,36 @@ const ReviewSessionSchema = new mongoose.Schema(
       enum: ["pending", "completed"],
       default: "pending",
     },
+
+    reviewResult: {
+      tier: {
+        type: String,
+        enum: [
+          "very_low",
+          "somewhat_similar",
+          "almost_identical",
+        ],
+      },
+
+      summary: {
+        type: String,
+        default: "",
+      },
+
+      differences: {
+        type: [String],
+        default: [],
+      },
+
+      model: {
+        type: String,
+        default: "",
+      },
+
+      comparedAt: {
+        type: Date,
+      },
+    },
   },
   {
     timestamps: true,

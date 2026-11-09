@@ -762,3 +762,127 @@ h3 {
     padding: 25px;
   }
 }
+
+/* AI COMPARISON RESULT */
+.review-submit:disabled {
+  cursor: not-allowed;
+}
+
+.button-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 9px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  vertical-align: -2px;
+  animation: verify-spin 0.75s linear infinite;
+}
+
+@keyframes verify-spin {
+  to { transform: rotate(360deg); }
+}
+
+.completed-notice {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  background: #edf3ec;
+  border: 1px solid #d8e5d7;
+  border-radius: 8px;
+}
+
+.completed-check,
+.result-symbol {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--green);
+  color: white;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.completed-notice h3 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.completed-notice p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.comparison-result {
+  margin-top: 30px;
+  padding: 32px;
+  background: white;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--green);
+  border-radius: 9px;
+}
+
+.result-heading {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin: 12px 0 20px;
+}
+
+.result-heading h2 {
+  font-size: 25px;
+  margin-bottom: 5px;
+}
+
+.result-heading p,
+.result-summary,
+.result-disclaimer {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.result-low { border-left-color: #b65c50; }
+.result-low .result-symbol { background: #a94f45; }
+.result-medium { border-left-color: #b58c51; }
+.result-medium .result-symbol { background: #a77c3d; }
+.result-high { border-left-color: var(--green); }
+
+.result-differences {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.result-differences h3 {
+  font-size: 17px;
+  margin-bottom: 10px;
+}
+
+.result-differences ul {
+  padding-left: 19px;
+  color: #687467;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.result-disclaimer {
+  margin-top: 20px;
+  padding: 12px;
+  background: #f8f6f0;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+@media (max-width: 650px) {
+  .comparison-result { padding: 22px; }
+  .result-heading { align-items: flex-start; }
+  .result-heading h2 { font-size: 21px; }
+  .completed-notice { align-items: flex-start; padding: 18px; }
+}
