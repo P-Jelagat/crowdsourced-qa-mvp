@@ -480,7 +480,7 @@ Do not include markdown fences.`;
         },
 
         {
-          new: true,
+          returnDocument: "after",
         }
       );
 
