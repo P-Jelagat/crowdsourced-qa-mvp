@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import Order from "../models/Order.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -133,7 +134,6 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
     const { orderId } = req.params;
     const { productId } = req.body;
 
-    // VERIFYSAAS MUST HAVE THE SAME HANDOFF SECRET
     const handoffSecret = process.env.VERIFYSAAS_HANDOFF_SECRET;
 
     if (!handoffSecret) {
@@ -181,6 +181,15 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
       });
     }
 
+    // GET THE DEMOMART CUSTOMER
+    const customer = await User.findById(req.userId);
+
+    if (!customer) {
+      return res.status(404).json({
+        message: "Customer account not found.",
+      });
+    }
+
     // CREATE A SHORT-LIVED SIGNED HANDOFF TOKEN
     const handoffToken = jwt.sign(
       {
@@ -203,6 +212,8 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
         quantity: purchasedItem.quantity,
 
         customerId: String(req.userId),
+
+        customerEmail: customer.email,
       },
       handoffSecret,
       {
@@ -225,6 +236,5 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
     });
   }
 });
-
 
 export default router;
