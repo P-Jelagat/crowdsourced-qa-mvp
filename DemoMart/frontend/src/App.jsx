@@ -1078,15 +1078,31 @@ const handleReviewProduct = async (item, orderId) => {
                                   )}
                                 </strong>
 
-                                <button
-                                  type="button"
-                                  className="review-product-btn"
-                                  onClick={() =>
-                                    handleReviewProduct(item, order.orderId)
-                                  }
-                                >
-                                  Review on VerifySaaS →
-                                </button>
+{item.reviewed ? (
+  <button
+    type="button"
+    className="review-product-btn"
+    disabled
+    style={{
+      opacity: 0.55,
+      cursor: "not-allowed",
+      backgroundColor: "#dce5dc",
+      color: "#526b52",
+    }}
+  >
+    Review completed ✓
+  </button>
+) : (
+  <button
+    type="button"
+    className="review-product-btn"
+    onClick={() =>
+      handleReviewProduct(item, order.orderId)
+    }
+  >
+    Review on VerifySaaS →
+  </button>
+)}
                               </div>
                             </div>
                           ))}

@@ -484,17 +484,85 @@ Do not include markdown fences.`;
         }
       );
 
-      if (!updatedSession) {
-        return res.status(409).json({
-          message: "This purchased product has already been reviewed.",
-        });
-      }
+if (!updatedSession) {
+  return res.status(409).json({
+    message: "This purchased product has already been reviewed.",
+  });
+}
 
-      return res.status(200).json({
-        message: "Product comparison completed.",
 
-        reviewResult: updatedSession.reviewResult,
-      });
+// ==========================================
+// NOTIFY DEMOMART THAT THE REVIEW IS COMPLETE
+// ==========================================
+
+try {
+  const handoffSecret = process.env.VERIFYSAAS_HANDOFF_SECRET;
+
+  const notificationToken = jwt.sign(
+    {
+      orderId: updatedSession.sourceOrderId,
+
+      productId: updatedSession.sourceProductId,
+
+      customerId: updatedSession.demomartCustomerId,
+    },
+    handoffSecret,
+    {
+      expiresIn: "2m",
+      issuer: "verifysaas",
+      audience: "demomart",
+    }
+  );
+
+  const demomartApiUrl =
+    process.env.DEMOMART_API_URL ||
+    "http://localhost:5001";
+
+  const notificationResponse = await fetch(
+    `${demomartApiUrl}/api/orders/verify-review-completed`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+
+        Authorization: `Bearer ${notificationToken}`,
+      },
+
+      body: JSON.stringify({
+        orderId: updatedSession.sourceOrderId,
+        productId: updatedSession.sourceProductId,
+      }),
+    }
+  );
+
+  if (!notificationResponse.ok) {
+    const notificationError = await notificationResponse.text();
+
+    console.error(
+      "DemoMart review status notification failed:",
+      notificationError
+    );
+  } else {
+    console.log(
+      "DemoMart successfully notified about completed review."
+    );
+  }
+
+} catch (notificationError) {
+  console.error(
+    "Could not notify DemoMart about the completed review:",
+    notificationError
+  );
+}
+
+
+// Return the successful comparison result.
+return res.status(200).json({
+  message: "Product comparison completed.",
+
+  reviewResult: updatedSession.reviewResult,
+});
 
     } catch (error) {
       console.error("AI comparison error:", error);

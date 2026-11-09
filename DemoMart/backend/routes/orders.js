@@ -5,7 +5,11 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-// AUTHENTICATION MIDDLEWARE
+
+// ==========================================
+// DEMOMART CUSTOMER AUTHENTICATION
+// ==========================================
+
 const authGuard = (req, res, next) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
@@ -32,7 +36,98 @@ const authGuard = (req, res, next) => {
 };
 
 
+// ==========================================
+// RECEIVE VERIFYSAAS REVIEW COMPLETION
+// ==========================================
+
+router.post("/verify-review-completed", async (req, res) => {
+  try {
+    const handoffSecret = process.env.VERIFYSAAS_HANDOFF_SECRET;
+
+    if (!handoffSecret) {
+      return res.status(500).json({
+        message: "Review integration is not configured.",
+      });
+    }
+
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      return res.status(401).json({
+        message: "Verification token is missing.",
+      });
+    }
+
+    let payload;
+
+    try {
+      payload = jwt.verify(token, handoffSecret, {
+        issuer: "verifysaas",
+        audience: "demomart",
+      });
+    } catch (error) {
+      return res.status(401).json({
+        message: "Invalid review completion notification.",
+      });
+    }
+
+    if (
+      !payload.orderId ||
+      !payload.productId ||
+      !payload.customerId
+    ) {
+      return res.status(400).json({
+        message: "Review completion information is incomplete.",
+      });
+    }
+
+    // Find the original order belonging to the customer.
+    const order = await Order.findOne({
+      orderId: payload.orderId,
+      userId: payload.customerId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "The original DemoMart order could not be found.",
+      });
+    }
+
+    // Find the specific purchased product.
+    const purchasedItem = order.items.find(
+      (item) => item.productId === payload.productId
+    );
+
+    if (!purchasedItem) {
+      return res.status(404).json({
+        message: "The purchased product could not be found.",
+      });
+    }
+
+    // Mark this product as reviewed.
+    purchasedItem.reviewed = true;
+    purchasedItem.reviewedAt = new Date();
+
+    await order.save();
+
+    return res.status(200).json({
+      message: "DemoMart review status successfully updated.",
+    });
+
+  } catch (error) {
+    console.error("Review completion notification error:", error);
+
+    return res.status(500).json({
+      message: "Unable to update the DemoMart review status.",
+    });
+  }
+});
+
+
+// ==========================================
 // GET ORDER HISTORY
+// ==========================================
+
 router.get("/", authGuard, async (req, res) => {
   try {
     const orders = await Order.find({
@@ -51,7 +146,10 @@ router.get("/", authGuard, async (req, res) => {
 });
 
 
+// ==========================================
 // CREATE NEW ORDER
+// ==========================================
+
 router.post("/", authGuard, async (req, res) => {
   try {
     const { items, total } = req.body;
@@ -94,6 +192,9 @@ router.post("/", authGuard, async (req, res) => {
       image: item.image,
       quantity: Number(item.quantity),
       pricePaid: Number(item.price),
+
+      reviewed: false,
+      reviewedAt: null,
     }));
 
     const newOrder = new Order({
@@ -128,7 +229,10 @@ router.post("/", authGuard, async (req, res) => {
 });
 
 
+// ==========================================
 // CREATE VERIFYSAAS REVIEW SESSION
+// ==========================================
+
 router.post("/:orderId/review-session", authGuard, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -148,7 +252,7 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
       });
     }
 
-    // FIND THE ORDER BELONGING TO THIS CUSTOMER
+    // Find the customer's order.
     const order = await Order.findOne({
       orderId,
       userId: req.userId,
@@ -160,7 +264,7 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
       });
     }
 
-    // CHECK WHETHER THE PRODUCT WAS ACTUALLY PURCHASED
+    // Find the purchased product.
     const purchasedItem = order.items.find(
       (item) => item.productId === productId
     );
@@ -168,6 +272,13 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
     if (!purchasedItem) {
       return res.status(403).json({
         message: "This product does not belong to the selected order.",
+      });
+    }
+
+    // Prevent another review if one has already been completed.
+    if (purchasedItem.reviewed === true) {
+      return res.status(409).json({
+        message: "You have already reviewed this purchased product.",
       });
     }
 
@@ -181,7 +292,7 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
       });
     }
 
-    // GET THE DEMOMART CUSTOMER
+    // Get the DemoMart customer.
     const customer = await User.findById(req.userId);
 
     if (!customer) {
@@ -190,7 +301,7 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
       });
     }
 
-    // CREATE A SHORT-LIVED SIGNED HANDOFF TOKEN
+    // Create the short-lived signed handoff token.
     const handoffToken = jwt.sign(
       {
         source: "demomart",
@@ -236,5 +347,6 @@ router.post("/:orderId/review-session", authGuard, async (req, res) => {
     });
   }
 });
+
 
 export default router;
